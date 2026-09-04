@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Private working records. These are NOT part of the archive: the analysis
+# hand-off is a planning document (venue strategy, unpublished paper plans),
+# and the packaging notes are internal QA. Both live outside the repo; these
+# patterns are belt-and-braces in case a copy is ever placed here.
+TELECONNECTION_ANALYSIS_HANDOFF.md
+ZENODO_PACKAGING_NOTES.md
+
+# Bulk pipeline inputs and working intermediates: either input the Caravan
+# authors distribute themselves, or output regenerable from this code. The
+# derived products behind the paper are the exception and ARE tracked, in
+# derived_data/ (see its README).
+/caravan_raw/
+/caravan_states/
+/caravan_derived/
+/calibrated_params_caravan/
+*.parquet
+*.log
+!derived_data/*.parquet
+
+# Figures are tracked (they are the published figures), but scratch renders
+# from an interactive session are not.
+figures/scratch/

@@ -1,0 +1,28 @@
+# Core scientific stack for the caravan-teleconnection pipeline.
+#
+# Unpinned, since nothing here depends on a specific version. For the record,
+# the published results were produced on Python 3.12.11 with numpy 2.2.6,
+# pandas 2.3.0, scipy 1.15.2, statsmodels 0.14.4, matplotlib 3.10.3,
+# pyarrow 19.0.1, xarray 2025.7.0, netCDF4 1.7.2, numba 0.61.2 and
+# cartopy 0.24.0.
+numpy
+pandas
+scipy
+pyarrow          # parquet I/O for every stage-1/2/3 intermediate
+xarray           # reads the Caravan per-basin netCDF timeseries (caravan_io.py)
+netCDF4          # xarray's netCDF backend for those files
+statsmodels      # cluster-robust OLS and the wild cluster bootstrap
+                 # (stage3_full_synthesis.py), and the stage-1 OLS fits
+matplotlib       # all figures (plot_*.py)
+numba            # JIT kernels inside hbv-model's hbv.py (external dependency)
+
+# Optional. Coastlines and borders on the map panels of plot_stage1_beta.py,
+# plot_stage2_memory.py and plot_stage2c_timing.py. Every one of those falls
+# back to a plain lon/lat frame when cartopy or its Natural Earth cache is
+# unavailable, so the figures still build without it.
+# cartopy
+
+# Not on PyPI. The calibrated HBV itself comes from the separate hbv-model
+# repository (https://github.com/sopanpatil/hbv-model, MIT,
+# doi:10.5281/zenodo.21860981). Put it on PYTHONPATH, or set HBV_MODEL_REPO
+# to its checkout; see the README.

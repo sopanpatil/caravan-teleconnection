@@ -1,0 +1,173 @@
+#!/usr/bin/env python
+"""
+plot_stage2c_timing.py
+
+Stage-2c timing figure: the snowmelt phase shift. The winter teleconnection signal
+is tracked across the whole water year, and the flow response separates three
+registrations in time (fast winter / sustained aquifer / delayed snowmelt).
+
+Three panels:
+  (a) monthly response profiles r(L) for endpoint catchments (a flashy low-snow
+      upland, a chalk aquifer, a Nordic snow catchment) -- the winter peak and the
+      distinct spring-melt peak.
+  (b) map of the late-response fraction (share of response energy in April+),
+      the bounded phase-shift index -- snow-concentrated.
+  (c) late-response fraction vs snow cover across the sample (the Spearman control).
+
+    python plot_stage2c_timing.py --stage2c <stage2c_DJF.parquet> \
+        --attrs <attributes.parquet> --stage1 <stage1_DJF.parquet> \
+        --indices <teleconnection_seasonal.csv> --states-dir <dir> \
+        --manifest <states_manifest.csv> --out figures/fig3_snowmelt_timing.png
+"""
+from __future__ import annotations
+import argparse
+import os
+
+import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from scipy import stats
+
+EXTENT = [-25, 32, 34, 72]
+BETA = {"NAO_DJF": "beta_NAO", "EA_DJF": "beta_EA",
+        "EAWR_DJF": "beta_EAWR", "SCA_DJF": "beta_SCA"}
+LAGS = list(range(0, 12))
+MLAB = ["Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"]
+# endpoint catchments (fall back to nearest in-sample if absent)
+ENDPOINTS = [("camelsgb", "camelsgb_15025", "flashy upland (Scotland, snow-free)", "#e08214"),
+             ("camelsgb", "camelsgb_43008", "chalk aquifer (England)", "#c1666b"),
+             ("grdc", "GRDC_6729140", "snow catchment (Norway)", "#4b8fd0")]
+
+
+def _basemap(ax):
+    try:
+        import cartopy.feature as cfeature
+        ax.add_feature(cfeature.LAND.with_scale("50m"), facecolor="#f3f1ec", zorder=0)
+        ax.add_feature(cfeature.OCEAN.with_scale("50m"), facecolor="#dce7ef", zorder=0)
+        ax.add_feature(cfeature.COASTLINE.with_scale("50m"), lw=0.4, edgecolor="#555", zorder=1)
+        ax.add_feature(cfeature.BORDERS.with_scale("50m"), lw=0.25, edgecolor="#999", zorder=1)
+    except Exception as e:  # noqa: BLE001
+        print(f"  (cartopy unavailable: {type(e).__name__}; plain frame)", flush=True)
+
+
+def _map_ax(fig, gs):
+    try:
+        import cartopy.crs as ccrs
+        proj = ccrs.PlateCarree()
+        ax = fig.add_subplot(gs, projection=proj)
+        ax.set_extent(EXTENT, crs=proj)
+        return ax, {"transform": proj}
+    except Exception:
+        ax = fig.add_subplot(gs)
+        ax.set_xlim(EXTENT[:2]); ax.set_ylim(EXTENT[2:]); ax.set_aspect(1.4)
+        return ax, {}
+
+
+def lag_profile(gid, src, betas, indices, states_dir, spinup):
+    """r(L): correlate winter forcing Phat'(y) with monthly flow anomaly at lag L."""
+    b = betas.loc[gid]
+    phat = sum(b[BETA[c]] * indices[c] for c in BETA).dropna()
+    df = pd.read_parquet(os.path.join(states_dir, src, gid + ".parquet"), columns=["Qsim"])
+    if gid in spinup.index:
+        df = df[df.index >= spinup.loc[gid]]
+    m = df["Qsim"].resample("MS").mean()
+    m = m - m.groupby(m.index.month).transform("mean")
+    idx = {(t.year, t.month): v for t, v in m.items()}
+    r = []
+    for L in LAGS:
+        xs, ys = [], []
+        for y, p in phat.items():
+            if not np.isfinite(p):
+                continue
+            dt = pd.Timestamp(int(y) - 1, 12, 1) + pd.DateOffset(months=L)
+            v = idx.get((dt.year, dt.month), np.nan)
+            if np.isfinite(v):
+                xs.append(v); ys.append(p)
+        r.append(np.corrcoef(xs, ys)[0, 1] if len(xs) > 15 else np.nan)
+    return np.array(r)
+
+
+def make(s2c, attrs, betas, indices, states_dir, spinup, out):
+    d = s2c.merge(attrs, on="gauge_id", how="left")
+    ok = d[d.sig > 0.2].copy()
+
+    fig = plt.figure(figsize=(10.0, 8.4))
+    gs = fig.add_gridspec(2, 2, height_ratios=[0.85, 1.4], hspace=0.30, wspace=0.34)
+
+    # (a) response profiles for endpoints -------------------------------------
+    axp = fig.add_subplot(gs[0, :])
+    for src, gid, lab, col in ENDPOINTS:
+        if gid not in betas.index:
+            print(f"  endpoint {gid} not in sample; skipped", flush=True)
+            continue
+        try:
+            r = lag_profile(gid, src, betas, indices, states_dir, spinup)
+        except FileNotFoundError:
+            print(f"  states missing for {gid}; skipped", flush=True)
+            continue
+        axp.plot(LAGS, r, "-o", color=col, lw=1.8, ms=4, label=lab)
+    axp.axhline(0, color="#888", lw=0.7)
+    axp.axvspan(-0.5, 2.5, color="#dce7ef", alpha=0.6, zorder=0)   # DJF window
+    axp.text(1, axp.get_ylim()[1] * 0.92 if axp.get_ylim()[1] > 0 else 0.6, "winter",
+             ha="center", fontsize=8, color="#345")
+    axp.set_xticks(LAGS); axp.set_xticklabels(MLAB, fontsize=8)
+    axp.set_ylabel("corr(flow anomaly, winter forcing)", fontsize=9.5)
+    axp.set_title("(a) When the winter signal reaches the gauge: flashy catchments register it in "
+                  "winter,\nsnow catchments re-register it at spring melt", fontsize=9.5, loc="left")
+    axp.legend(fontsize=8.5, loc="upper right", framealpha=0.9)
+    axp.grid(axis="y", ls=":", alpha=0.4)
+
+    # (b) map of late-response fraction ---------------------------------------
+    axm, tf = _map_ax(fig, gs[1, 0])
+    _basemap(axm)
+    order = ok.late_frac.argsort()
+    sc = axm.scatter(ok.gauge_lon.iloc[order], ok.gauge_lat.iloc[order],
+                     c=ok.late_frac.iloc[order], cmap="YlGnBu", vmin=0, vmax=0.8,
+                     s=13, alpha=0.9, edgecolors="none", zorder=2, **tf)
+    cb = plt.colorbar(sc, ax=axm, shrink=0.62, pad=0.02, extend="max")
+    cb.set_label("late fraction", fontsize=9)
+    axm.set_title(f"(b) Phase-shift index (share of response in spring+)\n({len(ok)} catchments)",
+                  fontsize=10)
+
+    # (c) late-response fraction vs snow --------------------------------------
+    axs = fig.add_subplot(gs[1, 1])
+    x = ok.frac_snow.to_numpy(); y = ok.late_frac.to_numpy()
+    axs.scatter(x, y, s=10, alpha=0.35, color="#4b8fd0", edgecolors="none")
+    # binned medians
+    bins = np.linspace(0, ok.frac_snow.quantile(0.99), 9)
+    ctr = 0.5 * (bins[:-1] + bins[1:])
+    med = [np.nanmedian(y[(x >= bins[i]) & (x < bins[i + 1])]) for i in range(len(bins) - 1)]
+    axs.plot(ctr, med, "-o", color="#c1666b", lw=2, ms=5, label="binned median")
+    rho = stats.spearmanr(x, y, nan_policy="omit").statistic
+    axs.set_xlabel("snow fraction", fontsize=9.5)
+    axs.set_ylabel("late-response fraction", fontsize=9.5)
+    axs.set_title(f"(c) Timing is set by snow\n(Spearman $\\rho={rho:+.2f}$)", fontsize=10)
+    axs.legend(fontsize=8.5, loc="lower right"); axs.grid(ls=":", alpha=0.4)
+
+    fig.savefig(out, dpi=300, bbox_inches="tight")
+    fig.savefig(os.path.splitext(out)[0] + ".pdf", bbox_inches="tight")
+    plt.close(fig)
+    print(f"  wrote {out} (+.pdf)  signal={len(ok)}", flush=True)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--stage2c", required=True)
+    ap.add_argument("--attrs", required=True)
+    ap.add_argument("--stage1", required=True)
+    ap.add_argument("--indices", required=True)
+    ap.add_argument("--states-dir", required=True)
+    ap.add_argument("--manifest", required=True)
+    ap.add_argument("--out", default="figures/fig3_snowmelt_timing.png")
+    a = ap.parse_args()
+    betas = pd.read_parquet(a.stage1).set_index("gauge_id")
+    indices = pd.read_csv(a.indices).set_index("winter_year")
+    spinup = pd.to_datetime(pd.read_csv(a.manifest).set_index("gauge_id")["spinup_end"])
+    make(pd.read_parquet(a.stage2c), pd.read_parquet(a.attrs), betas, indices,
+         a.states_dir, spinup, a.out)
+
+
+if __name__ == "__main__":
+    main()

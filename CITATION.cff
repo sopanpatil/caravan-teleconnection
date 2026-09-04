@@ -1,0 +1,59 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the software and the paper below."
+title: "caravan-teleconnection: Analysis pipeline for catchment storage controls on the European winter teleconnection response"
+type: software
+authors:
+  - family-names: Patil
+    given-names: Sopan D.
+    orcid: "https://orcid.org/0000-0002-8575-5220"
+    affiliation: "Bangor University"
+version: "1.0.0"
+license: MIT
+repository-code: "https://github.com/sopanpatil/caravan-teleconnection"
+date-released: "2026-09-04"
+keywords:
+  - hydrology
+  - large-sample hydrology
+  - teleconnections
+  - North Atlantic Oscillation
+  - catchment storage
+  - streamflow memory
+  - regionalisation
+# Concept DOI goes here once the first Zenodo release is minted; it resolves
+# to the newest version, so it stays correct across releases.
+# doi: "10.5281/zenodo.XXXXXXXX"
+references:
+  - type: software
+    title: "hbv-model: A standalone HBV rainfall-runoff model and SCE-UA calibration implementation"
+    authors:
+      - family-names: Patil
+        given-names: Sopan D.
+      - family-names: Dallison
+        given-names: Richard J. H.
+      - family-names: Jahanshahi
+        given-names: Afshin
+    doi: "10.5281/zenodo.21860981"
+    version: "1.1.0"
+  - type: article
+    title: "Caravan - A global community dataset for large-sample hydrology"
+    authors:
+      - family-names: Kratzert
+        given-names: Frederik
+      - family-names: Nearing
+        given-names: Grey
+      - family-names: Addor
+        given-names: Nans
+    journal: "Scientific Data"
+    volume: 10
+    year: 2023
+    doi: "10.1038/s41597-023-01975-w"
+preferred-citation:
+  type: article
+  title: "Catchment storage controls on the response of European winter streamflow to North Atlantic teleconnections"
+  authors:
+    - family-names: Patil
+      given-names: Sopan D.
+      orcid: "https://orcid.org/0000-0002-8575-5220"
+  year: 2026
+  # journal: "..."               # add once the venue is settled
+  # doi: "10.xxxx/xxxxxxxxxx"    # add once the article DOI is assigned
