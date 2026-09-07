@@ -12,10 +12,11 @@ physically distinct and geographically separated:
   * LZ (groundwater)  -- the slow aquifer store, with a heavy tail (chalk/karst
                          lowlands) that is the multi-annual memory in the sample.
 
-Three panels: (a) distribution of tau per store on a log axis (the ordering
-UZ<Qsim<SP<SM<LZ, LZ's aquifer tail); (b) map of snowpack memory tau_SP;
-(c) map of groundwater memory tau_LZ. Maps reuse the Stage-1 cartopy/fallback
-convention.
+Three panels: (a) distribution of tau per store on a log axis, ordered so the
+two highlighted reservoirs SP and LZ sit together, with LZ's aquifer tail;
+(b) map of snowpack memory tau_SP; (c) map of groundwater memory tau_LZ. The two
+maps carry different colour scales, each matched to its own store. Maps reuse the
+Stage-1 cartopy/fallback convention.
 
     python plot_stage2_memory.py --stage2 <stage2_DJF.parquet> --out <fig.png>
 """
@@ -27,11 +28,11 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
+from matplotlib.colors import LogNorm, Normalize
 
 EXTENT = [-25, 32, 34, 72]          # lon0, lon1, lat0, lat1 (Europe)
 SP_ACTIVE = 0.30                    # snowpack "active" if SP anomaly lives >=30% of winters
-STORES = ["UZ", "Qsim", "SP", "SM", "LZ"]
+STORES = ["UZ", "Qsim", "SM", "SP", "LZ"]   # SP and LZ adjacent: the two long-memory reservoirs
 STORE_LABEL = {"UZ": "UZ\n(upper/quick)", "Qsim": "Q\n(streamflow)",
                "SP": "SP\n(snowpack)", "SM": "SM\n(soil)", "LZ": "LZ\n(groundwater)"}
 STORE_COLOR = {"UZ": "#9aa0a6", "Qsim": "#9aa0a6", "SP": "#4b8fd0",
@@ -64,17 +65,19 @@ def _map_ax(fig, gs):
         return ax, {}
 
 
-def _store_map(fig, gs, d, store, title, vmin, vmax):
+def _store_map(fig, gs, d, store, title, vmin, vmax, cblabel, log=True):
     ax, tf = _map_ax(fig, gs)
     _basemap(ax)
     t = d[f"tau_{store}"].clip(vmin, vmax)
     order = t.fillna(-1).argsort()             # draw long-memory points on top
     sc = ax.scatter(d.gauge_lon.iloc[order], d.gauge_lat.iloc[order], c=t.iloc[order],
-                    cmap="viridis", norm=LogNorm(vmin=vmin, vmax=vmax),
+                    cmap="viridis",
+                    norm=(LogNorm(vmin=vmin, vmax=vmax) if log
+                          else Normalize(vmin=vmin, vmax=vmax)),
                     s=13, alpha=0.9, edgecolors="none", zorder=2, **tf)
-    cb = plt.colorbar(sc, ax=ax, shrink=0.62, pad=0.02, extend="max")
-    cb.set_label(r"memory $\tau$ (days)", fontsize=9)
-    ax.set_title(f"{title}\n({len(d)} catchments)", fontsize=10)
+    cb = plt.colorbar(sc, ax=ax, shrink=0.62, pad=0.02, extend="both")
+    cb.set_label(cblabel, fontsize=9)
+    ax.set_title(f"{title}\n({len(d):,} catchments)", fontsize=10)
     return sc
 
 
@@ -83,8 +86,8 @@ def make(stage2: pd.DataFrame, out: str):
     snow = d[(d.sp_active_frac >= SP_ACTIVE) & d.tau_SP.notna()].copy()
     gw = d[d.tau_LZ.notna()].copy()
 
-    fig = plt.figure(figsize=(10.0, 8.2))
-    gs = fig.add_gridspec(2, 2, height_ratios=[0.72, 1.4], hspace=0.16, wspace=0.10)
+    fig = plt.figure(figsize=(10.0, 7.4))
+    gs = fig.add_gridspec(2, 2, height_ratios=[0.80, 1.4], hspace=0.02, wspace=0.10)
 
     # (a) distribution of tau per store, log axis --------------------------------
     axd = fig.add_subplot(gs[0, :])
@@ -110,8 +113,15 @@ def make(stage2: pd.DataFrame, out: str):
     axd.grid(axis="y", ls=":", alpha=0.4)
 
     # (b) snowpack memory map, (c) groundwater memory map ------------------------
-    _store_map(fig, gs[1, 0], snow, "SP", "(b) Snowpack memory $\\tau_{SP}$", vmin=5, vmax=180)
-    _store_map(fig, gs[1, 1], gw, "LZ", "(c) Groundwater memory $\\tau_{LZ}$", vmin=10, vmax=730)
+    # The two maps carry different colour scales, each matched to its own store
+    # (SP spans 47-97 d over 5-95 pct; LZ spans three orders of magnitude), so the
+    # bars are labelled by store rather than both reading "memory tau".
+    # SP spans only a factor of ~2.75, so a log scale buys nothing and prints
+    # 4x10^1-style ticks; LZ spans three orders of magnitude and needs one.
+    _store_map(fig, gs[1, 0], snow, "SP", "(b) Snowpack memory $\\tau_{SP}$",
+               vmin=40, vmax=110, cblabel=r"$\tau_{SP}$ (days)", log=False)
+    _store_map(fig, gs[1, 1], gw, "LZ", "(c) Groundwater memory $\\tau_{LZ}$",
+               vmin=10, vmax=1100, cblabel=r"$\tau_{LZ}$ (days)")
 
     fig.savefig(out, dpi=300, bbox_inches="tight")
     import os

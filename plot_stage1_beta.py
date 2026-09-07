@@ -24,7 +24,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-EXTENT = [-25, 32, 34, 72]   # lon0, lon1, lat0, lat1 (Europe)
+EXTENT = [-25, 32, 36, 72]   # lon0, lon1, lat0, lat1 (Europe; data span -23.1..31.0, 37.3..70.9)
 INDICES = ["NAO", "EA", "EAWR", "SCA"]
 
 
@@ -46,18 +46,30 @@ def plot_one(res: pd.DataFrame, idx: str, out: str):
     beta, sig = res[f"beta_{idx}"], res[f"sig_{idx}"]
     vmax = np.nanpercentile(np.abs(beta), 98)  # robust symmetric limits
 
+    # figsize follows the extent's own aspect (57 deg lon x 36 deg lat), so the
+    # map fills the canvas and the colourbar stays proportionate to it.
+    on_map = False
     try:
         import cartopy.crs as ccrs
         proj = ccrs.PlateCarree()
-        fig = plt.figure(figsize=(7.2, 8.0))
+        fig = plt.figure(figsize=(9.0, 6.4))
         ax = plt.axes(projection=proj)
         ax.set_extent(EXTENT, crs=proj)
         tf = {"transform": proj}
+        on_map = True
     except Exception:
-        fig, ax = plt.subplots(figsize=(7.2, 8.0))
+        fig, ax = plt.subplots(figsize=(9.0, 6.4))
         ax.set_xlim(EXTENT[:2]); ax.set_ylim(EXTENT[2:]); ax.set_aspect(1.4)
         tf = {}
     _basemap(ax)
+    if on_map:
+        try:
+            gl = ax.gridlines(draw_labels=True, lw=0.3, color="#aaa",
+                              alpha=0.6, linestyle=":")
+            gl.top_labels = gl.right_labels = False
+            gl.xlabel_style = gl.ylabel_style = {"size": 7, "color": "#555"}
+        except Exception as e:  # noqa: BLE001 - gridline labels need a recent cartopy
+            print(f"  (gridlines unavailable: {type(e).__name__})", flush=True)
 
     ns = ~sig
     ax.scatter(res.gauge_lon[ns], res.gauge_lat[ns], c=beta[ns], cmap="coolwarm",
@@ -66,7 +78,7 @@ def plot_one(res: pd.DataFrame, idx: str, out: str):
                     vmin=-vmax, vmax=vmax, s=30, alpha=0.95,
                     edgecolors="k", linewidths=0.3, zorder=3, **tf)
 
-    cb = plt.colorbar(sc, ax=ax, shrink=0.6, pad=0.02, extend="both")
+    cb = plt.colorbar(sc, ax=ax, shrink=0.72, aspect=34, pad=0.02, extend="both")
     cb.set_label(f"$\\beta_{{{idx}}}$  (mm day$^{{-1}}$ per unit index)", fontsize=10)
     n_sig = int(sig.sum())
     fig.tight_layout()

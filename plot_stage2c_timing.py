@@ -36,9 +36,9 @@ BETA = {"NAO_DJF": "beta_NAO", "EA_DJF": "beta_EA",
 LAGS = list(range(0, 12))
 MLAB = ["Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"]
 # endpoint catchments (fall back to nearest in-sample if absent)
-ENDPOINTS = [("camelsgb", "camelsgb_15025", "flashy upland (Scotland, snow-free)", "#e08214"),
-             ("camelsgb", "camelsgb_43008", "chalk aquifer (England)", "#c1666b"),
-             ("grdc", "GRDC_6729140", "snow catchment (Norway)", "#4b8fd0")]
+ENDPOINTS = [("camelsgb", "camelsgb_15025", "flashy upland (Scotland, snow-free)", "#d55e00"),
+             ("camelsgb", "camelsgb_43008", "chalk aquifer (England)", "#cc79a7"),
+             ("grdc", "GRDC_6729140", "snow catchment (Norway)", "#0072b2")]
 
 
 def _basemap(ax):
@@ -94,7 +94,8 @@ def make(s2c, attrs, betas, indices, states_dir, spinup, out):
     ok = d[d.sig > 0.2].copy()
 
     fig = plt.figure(figsize=(10.0, 8.4))
-    gs = fig.add_gridspec(2, 2, height_ratios=[0.85, 1.4], hspace=0.30, wspace=0.34)
+    gs = fig.add_gridspec(2, 2, height_ratios=[0.85, 1.4], width_ratios=[1.25, 1.0],
+                          hspace=0.26, wspace=0.22)
 
     # (a) response profiles for endpoints -------------------------------------
     axp = fig.add_subplot(gs[0, :])
@@ -114,8 +115,8 @@ def make(s2c, attrs, betas, indices, states_dir, spinup, out):
              ha="center", fontsize=8, color="#345")
     axp.set_xticks(LAGS); axp.set_xticklabels(MLAB, fontsize=8)
     axp.set_ylabel("corr(flow anomaly, winter forcing)", fontsize=9.5)
-    axp.set_title("(a) When the winter signal reaches the gauge: flashy catchments register it in "
-                  "winter,\nsnow catchments re-register it at spring melt", fontsize=9.5, loc="left")
+    axp.set_title("(a) Monthly response profiles $r(L)$ for three endpoint catchments",
+                  fontsize=9.5, loc="left")
     axp.legend(fontsize=8.5, loc="upper right", framealpha=0.9)
     axp.grid(axis="y", ls=":", alpha=0.4)
 
@@ -124,11 +125,11 @@ def make(s2c, attrs, betas, indices, states_dir, spinup, out):
     _basemap(axm)
     order = ok.late_frac.argsort()
     sc = axm.scatter(ok.gauge_lon.iloc[order], ok.gauge_lat.iloc[order],
-                     c=ok.late_frac.iloc[order], cmap="YlGnBu", vmin=0, vmax=0.8,
+                     c=ok.late_frac.iloc[order], cmap="YlGnBu", vmin=0, vmax=1.0,
                      s=13, alpha=0.9, edgecolors="none", zorder=2, **tf)
-    cb = plt.colorbar(sc, ax=axm, shrink=0.62, pad=0.02, extend="max")
+    cb = plt.colorbar(sc, ax=axm, shrink=0.62, pad=0.02)
     cb.set_label("late fraction", fontsize=9)
-    axm.set_title(f"(b) Phase-shift index (share of response in spring+)\n({len(ok)} catchments)",
+    axm.set_title(f"(b) Phase-shift index (share of response in spring+)\n({len(ok):,} catchments)",
                   fontsize=10)
 
     # (c) late-response fraction vs snow --------------------------------------
@@ -136,14 +137,23 @@ def make(s2c, attrs, betas, indices, states_dir, spinup, out):
     x = ok.frac_snow.to_numpy(); y = ok.late_frac.to_numpy()
     axs.scatter(x, y, s=10, alpha=0.35, color="#4b8fd0", edgecolors="none")
     # binned medians
-    bins = np.linspace(0, ok.frac_snow.quantile(0.99), 9)
-    ctr = 0.5 * (bins[:-1] + bins[1:])
-    med = [np.nanmedian(y[(x >= bins[i]) & (x < bins[i + 1])]) for i in range(len(bins) - 1)]
-    axs.plot(ctr, med, "-o", color="#c1666b", lw=2, ms=5, label="binned median")
+    ctr, med = [], []
+    zero = x <= 0
+    if zero.sum() >= 20:                       # the snow-free atom is its own point
+        ctr.append(0.0); med.append(np.nanmedian(y[zero]))
+    pos = x > 0
+    if pos.sum() >= 40:                        # positive tail, equal-count bins
+        edges = np.unique(np.nanquantile(x[pos], np.linspace(0, 1, 9)))
+        for i in range(len(edges) - 1):
+            last = i == len(edges) - 2
+            sel = pos & (x >= edges[i]) & ((x <= edges[i + 1]) if last else (x < edges[i + 1]))
+            if sel.sum() >= 20:
+                ctr.append(np.nanmedian(x[sel])); med.append(np.nanmedian(y[sel]))
+    axs.plot(ctr, med, "-o", color="#c1666b", lw=2, ms=5, label="binned median (equal count)")
     rho = stats.spearmanr(x, y, nan_policy="omit").statistic
     axs.set_xlabel("snow fraction", fontsize=9.5)
     axs.set_ylabel("late-response fraction", fontsize=9.5)
-    axs.set_title(f"(c) Timing is set by snow\n(Spearman $\\rho={rho:+.2f}$)", fontsize=10)
+    axs.set_title(f"(c) Late-response fraction against snow fraction\n(Spearman $\\rho={rho:+.2f}$)", fontsize=10)
     axs.legend(fontsize=8.5, loc="lower right"); axs.grid(ls=":", alpha=0.4)
 
     fig.savefig(out, dpi=300, bbox_inches="tight")

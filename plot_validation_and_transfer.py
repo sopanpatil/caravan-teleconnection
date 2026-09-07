@@ -46,9 +46,9 @@ import matplotlib.pyplot as plt
 PRED_LABEL = {"slope_l": "slope (log)", "frac_snow": "snow fraction",
               "gwt_l": "GW-table depth (log)", "aridity": "aridity",
               "karst_pc": "karst %", "clay_pc": "clay %"}
-PROPS = [("gain_Qobs", "response strength", "#4c72b0"),
-         ("log_tau_obs", "memory", "#55a868"),
-         ("reg_lag_obs", "timing", "#c44e52")]
+PROPS = [("gain_Qobs", "response strength", "#0072b2", "o"),
+         ("log_tau_obs", "memory", "#009e73", "s"),
+         ("reg_lag_obs", "timing", "#d55e00", "^")]
 GLOBAL_C, LOCAL_C, DEBIAS_C = "#b9bcc0", "#c44e52", "#e8a33d"
 MIN_COUNTRY_N = 10   # per-country panel: skip groups too small for a meaningful R2
 
@@ -86,25 +86,42 @@ def fig_validation(d, path):
     ax.set(xlim=(0, 1), ylim=(0, 1),
            xlabel="observed late-response fraction",
            ylabel="simulated late-response fraction")
+    # equal-count binned medians, as in (c): the cloud is broad and the eye needs
+    # a guide to see the +0.71 rank agreement in it
+    xb = m.late_frac_obs.to_numpy(); yb = m.late_frac.to_numpy()
+    edges = np.unique(np.nanquantile(xb, np.linspace(0, 1, 10)))
+    cx, cy = [], []
+    for i in range(len(edges) - 1):
+        sel = (xb >= edges[i]) & (xb < edges[i + 1] if i < len(edges) - 2 else xb <= edges[i + 1])
+        if sel.sum() >= 20:
+            cx.append(np.nanmedian(xb[sel])); cy.append(np.nanmedian(yb[sel]))
+    ax.plot(cx, cy, "-o", color="#c44e52", lw=2, ms=4, zorder=4)
     rho = stats.spearmanr(m.late_frac_obs, m.late_frac).statistic
     ax.set_title(f"(b) timing\nSpearman {rho:+.2f}, n={len(m)}", fontsize=10, loc="left")
 
     ax = axes[2]
     m = d[["late_frac_obs", "sp_active_frac"]].dropna()
     ax.scatter(m.sp_active_frac, m.late_frac_obs, s=6, alpha=0.25, lw=0, color="#2f4b7c")
-    bins = np.linspace(0, m.sp_active_frac.quantile(0.99), 12)
-    idx = np.digitize(m.sp_active_frac, bins)
+    # same equal-count scheme as (b), with the snow-free atom held out: equal-width
+    # bins left the upper ones nearly empty and the median line wandered
+    sx = m.sp_active_frac.to_numpy(); sy = m.late_frac_obs.to_numpy()
     xs, ys = [], []
-    for b in range(1, len(bins)):
-        sel = idx == b
-        if sel.sum() >= 15:
-            xs.append(m.sp_active_frac[sel].median())
-            ys.append(m.late_frac_obs[sel].median())
+    zero = sx <= 0
+    if zero.sum() >= 20:
+        xs.append(0.0); ys.append(np.nanmedian(sy[zero]))
+    pos = sx > 0
+    if pos.sum() >= 40:
+        ed = np.unique(np.nanquantile(sx[pos], np.linspace(0, 1, 9)))
+        for i in range(len(ed) - 1):
+            last = i == len(ed) - 2
+            sel = pos & (sx >= ed[i]) & ((sx <= ed[i + 1]) if last else (sx < ed[i + 1]))
+            if sel.sum() >= 20:
+                xs.append(np.nanmedian(sx[sel])); ys.append(np.nanmedian(sy[sel]))
     ax.plot(xs, ys, "-o", color="#c44e52", lw=2, ms=4, zorder=4)
     rho = stats.spearmanr(m.sp_active_frac, m.late_frac_obs).statistic
     ax.set(xlabel="snow-active fraction of winters", ylabel="observed late-response fraction",
            ylim=(0, 1))
-    ax.set_title(f"(c) the phase shift is in the data\nSpearman {rho:+.2f}",
+    ax.set_title(f"(c) observed late fraction vs snow-active winters\nSpearman {rho:+.2f}",
                  fontsize=10, loc="left")
 
     for a in axes:
@@ -123,7 +140,7 @@ def fig_transfer(summary, coeffs, by_country, path):
     ax = fig.add_subplot(gs[0, 0])
     order = ["slope_l", "gwt_l", "aridity", "karst_pc", "frac_snow", "clay_pc"]
     h = 0.26
-    for k, (resp, lab, col) in enumerate(PROPS):
+    for k, (resp, lab, col, mk) in enumerate(PROPS):
         c = coeffs[coeffs.response == resp].set_index("predictor")
         if c.empty:
             continue
@@ -134,9 +151,9 @@ def fig_transfer(summary, coeffs, by_country, path):
         sigcol = "q_bh" if "q_bh" in c.columns else "p_wild_bootstrap"
         sig = c.loc[order, sigcol].to_numpy() < 0.05
         ax.errorbar(b, y, xerr=e, fmt="none", ecolor=col, elinewidth=1.4, alpha=0.9)
-        ax.scatter(b[sig], y[sig], s=34, color=col, zorder=4, label=lab)
-        ax.scatter(b[~sig], y[~sig], s=34, facecolors="white", edgecolors=col,
-                   linewidths=1.3, zorder=4)
+        ax.scatter(b[sig], y[sig], s=36, color=col, marker=mk, zorder=4, label=lab)
+        ax.scatter(b[~sig], y[~sig], s=36, facecolors="white", edgecolors=col,
+                   marker=mk, linewidths=1.3, zorder=4)
     ax.axvline(0, color="k", lw=0.9)
     ax.set_yticks(np.arange(len(order)))
     ax.set_yticklabels([PRED_LABEL[p] for p in order], fontsize=9)
@@ -183,7 +200,7 @@ def fig_transfer(summary, coeffs, by_country, path):
     ax = fig.add_subplot(gs[0, 2])
     labs, kf, lg, ll, ld = [], [], [], [], []
     has_db = "loco_r2_local_debiased_pooled" in summary.columns
-    for resp, lab, _ in PROPS:
+    for resp, lab, _, _ in PROPS:
         s = summary[summary.response == resp]
         if s.empty:
             continue
