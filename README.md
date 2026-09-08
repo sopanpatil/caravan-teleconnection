@@ -25,6 +25,11 @@ git clone https://github.com/sopanpatil/hbv-model
 export HBV_MODEL_REPO=/path/to/hbv-model        # or put it on PYTHONPATH
 ```
 
+Only `generate_states.py` and `calibrate_catchment.py` import it, because
+only they run HBV. If you are verifying the paper's numbers from
+`derived_data/` rather than rerunning the model, you do not need it: every
+verification script and the whole synthesis run without it.
+
 `cartopy` is optional: it adds coastlines and borders to the map panels, and
 every map falls back to a plain lon/lat frame without it.
 
@@ -171,7 +176,8 @@ Their outputs are archived instead. Figure 3 is in the same position.
 ## Verifying the reported numbers
 
 Most analysis scripts carry a `--selftest` that runs on synthetic data with a
-known answer and needs no archive:
+known answer and needs no archive. All but `generate_states.py` also run
+without `hbv-model`:
 
 ```
 for f in fit_precipitation_signal response_strength_and_memory response_timing \
