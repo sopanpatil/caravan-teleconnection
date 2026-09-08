@@ -23,9 +23,9 @@ Scope. Three groups, and the boundaries are deliberate:
   C  Claims that are NOT machine-checkable from the archive. Listed by
      --list-unchecked with the reason for each, so the gap is explicit rather
      than silent. Two other scripts cover the Supporting Information:
-     stage3b_gain_temperature_control.py (Text S1) and verify_text_s2.py
+     temperature_control.py (Text S1) and verify_text_s2.py
      (Text S2). Supporting Information Tables S1 to S3 are rendered directly
-     from stage3_full_*.csv, so they are checked by construction.
+     from physiographic_*.csv, so they are checked by construction.
 """
 from __future__ import annotations
 import argparse
@@ -38,7 +38,7 @@ from scipy.stats import spearmanr, pearsonr
 
 CHECKS: list[tuple] = []
 
-SIG_MIN = 0.2   # the peak |r| gate; must match stage2c_registration_lag.SIG_MIN
+SIG_MIN = 0.2   # the peak |r| gate; must match response_timing.SIG_MIN
 
 
 def _timing_pair(m):
@@ -84,7 +84,7 @@ def _(d): return int(d["cal"].include_in_analysis.astype(bool).sum())
 @claim("2.2", "16 countries", 16, 0)
 def _(d):
     # The raw country label splits Great Britain into England, Scotland, Wales
-    # and "Great Britain"; stage3_full_synthesis.py consolidates them, so the
+    # and "Great Britain"; physiographic_synthesis.py consolidates them, so the
     # analysis has 16 countries where the table has 19 labels.
     return d["inc"].country.replace(
         {"England": "Great Britain", "Scotland": "Great Britain",
@@ -536,37 +536,37 @@ def group_b() -> list[tuple[str, str, object, object]]:
     """Methods parameters, each checked against the constant that implements it."""
     spec = [
         ("3.2", "SCE-UA with seven complexes",
-         7, "calibrate_single_caravan.py", "N_COMPLEXES"),
+         7, "calibrate_catchment.py", "N_COMPLEXES"),
         ("3.2", "calibration window opens in winter year 1983",
-         "1983-01-01", "calibrate_single_caravan.py", "CAL_START"),
+         "1983-01-01", "calibrate_catchment.py", "CAL_START"),
         ("3.2", "validation window closes in 2020",
-         "2020-12-31", "calibrate_single_caravan.py", "VAL_END"),
+         "2020-12-31", "calibrate_catchment.py", "VAL_END"),
         ("3.2", "first five years discarded as spin-up",
          5, "generate_states.py", "SPINUP_YEARS"),
         ("2.2", "glacier cover above 5 % excluded",
-         5.0, "refine_calibration.py", "GLACIER_MAX"),
+         5.0, "screen_analysis_sample.py", "GLACIER_MAX"),
         ("3.1", "seasonal mean needs 80 of the 90 winter days",
-         80, "build_seasonal_join.py", "DEFAULT_MIN_DAYS"),
+         80, "build_seasonal_table.py", "DEFAULT_MIN_DAYS"),
         ("3.3.1", "gain estimated where at least 20 winters are available",
-         20, "stage1_sensitivity.py", "MIN_WINTERS"),
+         20, "fit_precipitation_signal.py", "MIN_WINTERS"),
         ("3.3.2", "e-folding searched within a five-year horizon",
-         1825, "stage2_filtering.py", "KMAX"),
+         1825, "response_strength_and_memory.py", "KMAX"),
         ("3.3.2", "at least 3,000 valid days for a memory estimate",
-         3000, "stage2_obs_validation.py", "MIN_DAYS"),
+         3000, "response_properties_observed.py", "MIN_DAYS"),
         ("3.3.2", "at least 365 valid day-pairs before a lag is admitted",
-         365, "stage2_obs_validation.py", "MIN_PAIRS"),
+         365, "response_properties_observed.py", "MIN_PAIRS"),
         ("3.3.2", "at least 20 valid days before a month contributes",
-         20, "stage2_obs_validation.py", "MIN_MONTH_DAYS"),
+         20, "response_properties_observed.py", "MIN_MONTH_DAYS"),
         ("3.3.3", "lag profile computed where peak |r| > 0.2",
-         0.2, "stage2c_registration_lag.py", "SIG_MIN"),
+         0.2, "response_timing.py", "SIG_MIN"),
         ("3.3.3", "lags 0 to 11 months after the December",
-         list(range(0, 12)), "stage2c_registration_lag.py", "LAGS"),
+         list(range(0, 12)), "response_timing.py", "LAGS"),
         ("3.4", "wild cluster bootstrap with 1,999 replicates",
-         1999, "stage3_full_synthesis.py", "NBOOT"),
+         1999, "physiographic_synthesis.py", "NBOOT"),
         ("3.4", "summaries restricted to countries with at least 10 catchments",
-         10, "stage3_full_synthesis.py", "MIN_COUNTRY_N"),
+         10, "physiographic_synthesis.py", "MIN_COUNTRY_N"),
         ("4.2.1", "snow-active means a snowpack anomaly in at least 30 % of winters",
-         0.3, "stage3b_gain_temperature_control.py", "SP_ACTIVE"),
+         0.3, "temperature_control.py", "SP_ACTIVE"),
         ("SI Text S2", "snow-free means HydroATLAS snow fraction at most 0.05",
          0.05, "verify_text_s2.py", "SNOW_FREE"),
     ]
@@ -596,12 +596,12 @@ UNCHECKED = [
     ("4.1", "latitude-band means -0.52, +0.41 and their significance shares",
      "reproduced by figures/fig1_nao_precipitation_sensitivity.py, which prints them"),
     ("4.4", "per-predictor coefficients, p and q",
-     "Supporting Information Table S2 is rendered from stage3_full_coeffs_*.csv"),
+     "Supporting Information Table S2 is rendered from physiographic_coeffs_*.csv"),
     ("4.5", "per-country skill",
      "Supporting Information Table S3 is rendered from "
-     "stage3_full_by_country_full.csv"),
+     "physiographic_by_country_full.csv"),
     ("SI Text S1", "temperature-control values",
-     "checked by stage3b_gain_temperature_control.py"),
+     "checked by temperature_control.py"),
     ("SI Text S2", "retention values",
      "checked by verify_text_s2.py"),
     ("Figures", "all five",
@@ -615,16 +615,16 @@ def load(derived: str) -> dict:
     d = {}
     d["cal"] = pd.read_csv(p("calibrated_parameters_ALL_refined.csv"))
     d["inc"] = d["cal"][d["cal"].include_in_analysis.astype(bool)]
-    d["s1"] = pd.read_parquet(p("stage1_DJF.parquet"))
-    d["s2"] = pd.read_parquet(p("stage2_DJF.parquet"))
-    d["s2c"] = pd.read_parquet(p("stage2c_DJF.parquet"))
-    d["obs"] = pd.read_parquet(p("stage2_obs_DJF.parquet"))
+    d["s1"] = pd.read_parquet(p("precipitation_signal_DJF.parquet"))
+    d["s2"] = pd.read_parquet(p("response_strength_memory_DJF.parquet"))
+    d["s2c"] = pd.read_parquet(p("response_timing_DJF.parquet"))
+    d["obs"] = pd.read_parquet(p("response_observed_DJF.parquet"))
     d["gain"] = pd.read_parquet(p("gain_temperature_control.parquet"))
     d["nest"] = pd.read_csv(p("nesting_flags.csv"))
     d["pairs"] = pd.read_csv(p("nesting_stem_pairs.csv"))
-    d["sum"] = pd.read_csv(p("stage3_full_summary_full.csv"))
-    d["sumi"] = pd.read_csv(p("stage3_full_summary_independent.csv"))
-    by = pd.read_csv(p("stage3_full_by_country_full.csv"))
+    d["sum"] = pd.read_csv(p("physiographic_summary_full.csv"))
+    d["sumi"] = pd.read_csv(p("physiographic_summary_independent.csv"))
+    by = pd.read_csv(p("physiographic_by_country_full.csv"))
     d["by"] = by[by.response == "log_tau_obs"]
     m = d["s2"].merge(d["s2c"].drop(columns=[c for c in d["s2c"].columns
                                              if c in d["s2"].columns and c != "gauge_id"]),

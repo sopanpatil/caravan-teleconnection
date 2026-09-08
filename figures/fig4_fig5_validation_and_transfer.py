@@ -3,7 +3,7 @@
 fig4_fig5_validation_and_transfer.py
 
 Produces Figures 4 and 5 of the manuscript: one script, because both figures
-read the same Stage-2/Stage-3 products and share their plotting helpers.
+read the same response-property and synthesis products and share their plotting helpers.
 
   --out-validation  Observation-side validation of the model-derived filter properties.
       (a) memory: e-folding tau of observed vs simulated flow, log-log, 1:1 line.
@@ -28,10 +28,10 @@ read the same Stage-2/Stage-3 products and share their plotting helpers.
   have opposite remedies -- a few local gauges fix a level error, nothing national fixes
   an ordering error. The gap between the red and orange bars is the level component.
 
-    python figures/fig4_fig5_validation_and_transfer.py --stage2 <stage2_DJF.parquet> \
-        --stage2c <stage2c_DJF.parquet> --stage2obs <stage2_obs_DJF.parquet> \
-        --summary <stage3_full_summary_full.csv> --coeffs <stage3_full_coeffs_full.csv> \
-        --by-country <stage3_full_by_country_full.csv> \
+    python figures/fig4_fig5_validation_and_transfer.py --strength-memory <response_strength_memory_DJF.parquet> \
+        --timing <response_timing_DJF.parquet> --observed <response_observed_DJF.parquet> \
+        --summary <physiographic_summary_full.csv> --coeffs <physiographic_coeffs_full.csv> \
+        --by-country <physiographic_by_country_full.csv> \
         [--out-validation <fig4.png>] [--out-transfer <fig5.png>]
 
   With neither given, writes the published Figure 4 and Figure 5 paths (and the
@@ -244,7 +244,7 @@ def fig_transfer(summary, coeffs, by_country, path):
 
 def main():
     ap = argparse.ArgumentParser()
-    for f in ["stage2", "stage2c", "stage2obs", "summary", "coeffs", "by-country"]:
+    for f in ["strength-memory", "timing", "observed", "summary", "coeffs", "by-country"]:
         ap.add_argument(f"--{f}")
     ap.add_argument("--out-validation",
                     default="figures/fig4_observed_validation.png")
@@ -252,10 +252,10 @@ def main():
                     default="figures/fig5_physiography_and_transfer.png")
     a = ap.parse_args()
 
-    d = pd.read_parquet(a.stage2obs).merge(
-        pd.read_parquet(a.stage2)[["gauge_id", "tau_Qsim", "ac1_Qsim", "sp_active_frac"]],
+    d = pd.read_parquet(a.observed).merge(
+        pd.read_parquet(a.strength_memory)[["gauge_id", "tau_Qsim", "ac1_Qsim", "sp_active_frac"]],
         on="gauge_id", how="left").merge(
-        pd.read_parquet(a.stage2c)[["gauge_id", "late_frac", "reg_lag", "sig"]],
+        pd.read_parquet(a.timing)[["gauge_id", "late_frac", "reg_lag", "sig"]],
         on="gauge_id", how="left")
     d = d[(d.sig > 0.2) | d.sig.isna()]
     fig_validation(d, a.out_validation)

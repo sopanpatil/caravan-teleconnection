@@ -3,7 +3,7 @@
 run_calibration_batch.py
 
 Calibrate every basin of a Caravan source in one process (one numba compile,
-no cache races), by looping calibrate_single_caravan.calibrate_basin. Resumable
+no cache races), by looping calibrate_catchment.calibrate_basin. Resumable
 (skips basins whose JSON already exists) and fault-tolerant (a failing basin is
 logged and skipped, not fatal). Suitable for a long-running background job for the
 smaller national sets (e.g. DK); the same worker also drives a job array for
@@ -20,7 +20,7 @@ import time
 
 import numpy as np
 
-from calibrate_single_caravan import calibrate_basin
+from calibrate_catchment import calibrate_basin
 
 
 def main():

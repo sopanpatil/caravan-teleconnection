@@ -8,7 +8,7 @@
 numpy
 pandas
 scipy
-pyarrow          # parquet I/O for every stage-1/2/3 intermediate
+pyarrow          # parquet I/O for every analysis intermediate
 xarray           # reads the Caravan per-basin netCDF timeseries (caravan_io.py)
 netCDF4          # xarray's netCDF backend for those files
 matplotlib       # all figures (figures/fig*.py)

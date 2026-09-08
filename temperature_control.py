@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """
-stage3b_gain_temperature_control.py
+temperature_control.py
 
 The exclusion restriction behind the response strength (Text S1 of the manuscript).
 
-The response strength ("gain") is the OLS slope of the DJF flow anomaly on the Stage-1
+The response strength ("gain") is the OLS slope of the DJF flow anomaly on the
 fitted forcing Phat'. Because Phat' is the projection of precipitation on the four
 circulation indices, cov(P', Phat') = var(Phat'), so that slope is ALGEBRAICALLY the
 two-stage least-squares estimate of dQ/dP instrumented by the indices. Reading it as
@@ -39,9 +39,9 @@ different question. A secondary split on the HydroATLAS attribute (frac_snow <= 
 the criterion Text S2 uses for a different purpose -- isolating unimodal lag profiles) is
 reported alongside, to show the conclusion does not depend on which is chosen.
 
-    python stage3b_gain_temperature_control.py --derived <caravan_derived dir>
-    python stage3b_gain_temperature_control.py --derived <dir> --out gain_tctrl.parquet
-    python stage3b_gain_temperature_control.py --selftest
+    python temperature_control.py --derived <caravan_derived dir>
+    python temperature_control.py --derived <dir> --out gain_tctrl.parquet
+    python temperature_control.py --selftest
 """
 from __future__ import annotations
 import argparse
@@ -50,7 +50,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-MIN_WINTERS_GAIN = 20        # as stage3_full_synthesis.py
+MIN_WINTERS_GAIN = 20        # as physiographic_synthesis.py
 SP_ACTIVE = 0.3              # snowpack anomaly present in >=30%% of winters => snow-active.
                              # PRIMARY split: the same one Results sec. 4.2.1 uses for the
                              # 0.89-vs-0.17 contrast this script exists to defend.
@@ -129,18 +129,18 @@ def catchment_row(gid: str, g: pd.DataFrame, betas: pd.Series) -> dict:
     return out
 
 
-def run(join: pd.DataFrame, stage1: pd.DataFrame) -> pd.DataFrame:
-    b = stage1.set_index("gauge_id")
+def run(join: pd.DataFrame, signal: pd.DataFrame) -> pd.DataFrame:
+    b = signal.set_index("gauge_id")
     rows = [catchment_row(gid, g, b.loc[gid])
             for gid, g in join.groupby("gauge_id", sort=False) if gid in b.index]
     return pd.DataFrame(rows)
 
 
-def validate(res: pd.DataFrame, stage2: pd.DataFrame, attrs: pd.DataFrame) -> dict:
+def validate(res: pd.DataFrame, strength_memory: pd.DataFrame, attrs: pd.DataFrame) -> dict:
     d = (res.set_index("gauge_id")
-            .join(stage2.set_index("gauge_id")[["gain_Qsim", "sp_active_frac"]])
+            .join(strength_memory.set_index("gauge_id")[["gain_Qsim", "sp_active_frac"]])
             .join(attrs.set_index("gauge_id")[["frac_snow"]]))
-    d = d.loc[d.index.intersection(stage2.gauge_id)]
+    d = d.loc[d.index.intersection(strength_memory.gauge_id)]
 
     # The single-regressor column must reproduce the archived gain, or the controlled
     # estimate is being compared against a different baseline and the shift is meaningless.
@@ -247,11 +247,11 @@ def main():
         return
     d = a.derived.rstrip("/")
     res = run(pd.read_parquet(f"{d}/seasonal_join_DJF.parquet"),
-              pd.read_parquet(f"{d}/stage1_DJF.parquet"))
+              pd.read_parquet(f"{d}/precipitation_signal_DJF.parquet"))
     if a.out:
         res.to_parquet(a.out)
         print(f"wrote {a.out}  ({len(res)} catchments)\n")
-    check(validate(res, pd.read_parquet(f"{d}/stage2_DJF.parquet"),
+    check(validate(res, pd.read_parquet(f"{d}/response_strength_memory_DJF.parquet"),
                    pd.read_parquet(f"{d}/attributes.parquet")))
 
 

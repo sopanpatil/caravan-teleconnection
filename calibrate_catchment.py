@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-calibrate_single_caravan.py
+calibrate_catchment.py
 
 Single-catchment HBV calibration worker for Caravan-format basins, using the
 published hbv-model repo (HBVModel + calibrate_sceua). Designed to be driven
@@ -13,7 +13,7 @@ Because Caravan uses ERA5-Land forcing, the GB `calibrated_parameters.csv`
 GB included, must be re-calibrated on Caravan forcing. This worker is that step.
 
 Usage:
-    python calibrate_single_caravan.py <source> <nc_path_or_gauge_id> [--root DIR] [--out DIR]
+    python calibrate_catchment.py <source> <nc_path_or_gauge_id> [--root DIR] [--out DIR]
 
 Writes one JSON per basin: {gauge_id, source, calibration_kge, validation_kge,
 n_cal_obs, n_val_obs, params}. Skips basins whose output already exists, so a

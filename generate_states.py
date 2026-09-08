@@ -7,10 +7,10 @@ catchment flagged `include_in_analysis` in the refined
 calibration table, force the *calibrated* HBV with that catchment's Caravan
 (ERA5-Land) P/T/PET and save the full DAILY state series.
 
-Daily resolution is deliberate: Stage-2 estimates a memory timescale tau per
+Daily resolution is deliberate: response_strength_and_memory.py estimates a memory timescale tau per
 store via lagged cross-correlation (tau(SM) ~ weeks, tau(LZ) ~ months-years),
 which cannot be recovered from pre-aggregated seasonal data. Seasonal/monthly
-aggregation for Stage-1 is derived downstream from these daily files.
+aggregation for the seasonal table is derived downstream from these daily files.
 
 Per catchment we write one parquet with the date index plus:
   forcing : precip, temp, pet, flow_obs   (flow_obs = observed streamflow, mm/day)

@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 """
-aggregate_results.py
+aggregate_calibration.py
 
 Collect the per-basin calibration JSONs (one dir per source under --out) into
 per-source CSVs plus a combined CSV, mirroring the GB calibrated_parameters.csv
 layout. `used_in_analysis` is a permissive first pass, flagging basins with KGE
 >= 0.3 in both calibration and validation. It is NOT the analysis screen: that is
-applied downstream by refine_calibration.py as `include_in_analysis` (KGE > 0.5
+applied downstream by screen_analysis_sample.py as `include_in_analysis` (KGE > 0.5
 in BOTH periods, plus the glacier and de-duplication screens), computed from the
 KGE columns directly rather than from this flag. Nothing downstream of
-refine_calibration.py reads `used_in_analysis`.
+screen_analysis_sample.py reads `used_in_analysis`.
 """
 from __future__ import annotations
 import argparse

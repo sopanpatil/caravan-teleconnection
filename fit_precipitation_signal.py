@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-stage1_sensitivity.py
+fit_precipitation_signal.py
 
 Stage-1 of the two-stage decomposition: local meteorological
 sensitivity. For each catchment, jointly regress the DJF precipitation anomaly on
@@ -9,7 +9,7 @@ the standardised CPC winter teleconnection indices
     precip_DJF_anom(c,wy) = b0 + b_NAO*NAO + b_EA*EA + b_EAWR*EAWR + b_SCA*SCA + e
 
 The betas are local rainfall sensitivities (mm/day per unit index) and are what
-Stage-2 normalises by (the fitted index-explained signal P'_hat = X[1:] @ beta[1:]).
+response_strength_and_memory.py normalises by (the fitted index-explained signal P'_hat = X[1:] @ beta[1:]).
 Per catchment we report each beta with OLS standard error / t / p, the joint model
 R^2 / adj-R^2 / F p-value, and n winters. p-values are then FDR-controlled
 (Benjamini-Hochberg) ACROSS catchments, separately per index, giving q-values and
@@ -18,9 +18,9 @@ significance flags -- the map-level multiple-comparison guard.
 Output: one row per catchment with gauge_id, source, gauge_lat, gauge_lon, area,
 n_winters, r2, adj_r2, f_pvalue, and beta/se/t/p/q/sig per index.
 
-    python stage1_sensitivity.py --join <seasonal_join_DJF.parquet> \
-        --attrs <calibrated_parameters_ALL_refined.csv> --out <stage1_DJF.parquet>
-    python stage1_sensitivity.py --selftest
+    python fit_precipitation_signal.py --join <seasonal_join_DJF.parquet> \
+        --attrs <calibrated_parameters_ALL_refined.csv> --out <precipitation_signal_DJF.parquet>
+    python fit_precipitation_signal.py --selftest
 """
 from __future__ import annotations
 import argparse
@@ -113,7 +113,7 @@ def run(join: pd.DataFrame, attrs: pd.DataFrame) -> pd.DataFrame:
 
 
 def validate(res: pd.DataFrame):
-    print("=== Stage-1 summary ===", flush=True)
+    print("=== precipitation signal summary ===", flush=True)
     print(f"catchments fit: {len(res)}   median n_winters={int(res.n_winters.median())}"
           f"   median R2={res.r2.median():.3f}", flush=True)
     for s in ("NAO", "EA", "EAWR", "SCA"):

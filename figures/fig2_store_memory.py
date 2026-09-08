@@ -4,7 +4,7 @@ fig2_store_memory.py
 
 Produces Figure 2 of the manuscript.
 
-Stage-2 two-reservoir memory figure -- the paper's differentiator. The HBV
+Two-reservoir memory figure -- the paper's differentiator. The HBV
 filtering gives each store its own memory timescale tau (e-folding days of the
 deseasonalised+detrended daily anomaly), and the two LONG-memory reservoirs are
 physically distinct and geographically separated:
@@ -18,9 +18,9 @@ Three panels: (a) distribution of tau per store on a log axis, ordered so the
 two highlighted reservoirs SP and LZ sit together, with LZ's aquifer tail;
 (b) map of snowpack memory tau_SP; (c) map of groundwater memory tau_LZ. The two
 maps carry different colour scales, each matched to its own store. Maps reuse the
-Stage-1 cartopy/fallback convention.
+cartopy/fallback convention used for Figure 1.
 
-    python figures/fig2_store_memory.py --stage2 <stage2_DJF.parquet>
+    python figures/fig2_store_memory.py --strength-memory <response_strength_memory_DJF.parquet>
 
   With no --out, writes the published Figure 2 path (and the .pdf beside it).
   Run from the repository root, since that default path is relative to it.
@@ -86,8 +86,8 @@ def _store_map(fig, gs, d, store, title, vmin, vmax, cblabel, log=True):
     return sc
 
 
-def make(stage2: pd.DataFrame, out: str):
-    d = stage2
+def make(strength_memory: pd.DataFrame, out: str):
+    d = strength_memory
     snow = d[(d.sp_active_frac >= SP_ACTIVE) & d.tau_SP.notna()].copy()
     gw = d[d.tau_LZ.notna()].copy()
 
@@ -137,10 +137,10 @@ def make(stage2: pd.DataFrame, out: str):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage2", required=True)
+    ap.add_argument("--strength-memory", required=True)
     ap.add_argument("--out", default="figures/fig2_store_memory.png")
     a = ap.parse_args()
-    make(pd.read_parquet(a.stage2), a.out)
+    make(pd.read_parquet(a.strength_memory), a.out)
 
 
 if __name__ == "__main__":

@@ -11,12 +11,12 @@ refers to the fitted forcing Phat', nevertheless governs how long a teleconnecti
 anomaly persists. It is the claim that licenses treating memory as one of the three
 response properties, and memory is the only property whose physiographic controls
 survive the wild cluster bootstrap, so the paper leans on it. This script exists so that
-the claim cannot drift silently if the upstream stages are re-run.
+the claim cannot drift silently if the upstream scripts are re-run.
 
 Subsetting criterion, which is easy to get wrong: "snow-free" here is the HydroATLAS
 attribute frac_snow <= 0.05, restricted to catchments with a detectable signal in BOTH
 the observed and simulated lag profiles (sig > 0.2 in each). The validate() print inside
-stage2c_registration_lag.py / stage2_obs_validation.py instead uses the MODEL's
+response_timing.py / response_properties_observed.py instead uses the MODEL's
 sp_active_frac, which is what those scripts have to hand: same sign and monotonicity,
 different n and rho. Do not cross-quote the two.
 
@@ -31,7 +31,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-SIG_MIN = 0.2        # peak |r| needed before a lag profile is usable, as Stage-2c
+SIG_MIN = 0.2        # peak |r| needed before a lag profile is usable, as in response_timing.py
 SNOW_FREE = 0.05     # HydroATLAS frac_snow at or below this counts as snow-free
 
 # (label, value quoted in Text S2, tolerance)
@@ -49,13 +49,13 @@ EXPECTED = {
 
 def load(derived: str) -> pd.DataFrame:
     d = derived.rstrip("/")
-    obs = pd.read_parquet(f"{d}/stage2_obs_DJF.parquet").set_index("gauge_id")
-    c2c = pd.read_parquet(f"{d}/stage2c_DJF.parquet").set_index("gauge_id")
-    s2 = pd.read_parquet(f"{d}/stage2_DJF.parquet").set_index("gauge_id")
+    obs = pd.read_parquet(f"{d}/response_observed_DJF.parquet").set_index("gauge_id")
+    c2c = pd.read_parquet(f"{d}/response_timing_DJF.parquet").set_index("gauge_id")
+    s2 = pd.read_parquet(f"{d}/response_strength_memory_DJF.parquet").set_index("gauge_id")
     at = pd.read_parquet(f"{d}/attributes.parquet").set_index("gauge_id")
     if "retention_obs" not in obs.columns:
-        sys.exit("stage2_obs_DJF.parquet has no retention_obs column: re-run "
-                 "stage2_obs_validation.py (the metric was added 2026-09-03)")
+        sys.exit("response_observed_DJF.parquet has no retention_obs column: re-run "
+                 "response_properties_observed.py (the metric was added 2026-09-03)")
     t = (obs[["retention_obs", "tau_Qobs", "sig_obs"]]
          .join(c2c[["sig"]]).join(s2[["tau_LZ"]]).join(at[["frac_snow"]]))
     return t[(t.sig_obs > SIG_MIN) & (t.sig > SIG_MIN)]

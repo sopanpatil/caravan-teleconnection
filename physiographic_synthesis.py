@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """
-stage3_full_synthesis.py
+physiographic_synthesis.py
 
-Consolidated Stage-3: the physiographic synthesis and the cross-national transfer
+The physiographic synthesis and the cross-national transfer
 test, for ALL THREE filter properties, with the inference and the skill reporting
-put on a defensible footing. This replaces an earlier trio of stage-3 scripts,
+put on a defensible footing. This replaces an earlier trio of synthesis scripts,
 not included in this release, which between them covered only memory and timing,
 reported p-values that 16 clusters cannot support, and scored transfer against a
 baseline that flatters it.
@@ -14,13 +14,13 @@ teleconnection signal:
 
   AMPLITUDE (gain)  the share of the fitted winter precipitation anomaly that reaches
                     the gauge in the same winter. Teleconnection-derived: it is the
-                    regression slope of the DJF flow anomaly on the Stage-1 fitted
+                    regression slope of the DJF flow anomaly on the fitted
                     forcing. Computed here for BOTH simulated and observed flow.
   MEMORY (tau, ac1) how long the catchment holds an anomaly. Note this is an INTRINSIC
                     property: it is read off the flow series itself and no
                     teleconnection index enters it.
   TIMING (lag)      when the catchment releases the signal over the water year.
-                    Teleconnection-derived, from the Stage-2c/obs lag profile.
+                    Teleconnection-derived, from the timing/observed lag profile.
 
 Each property is fitted on simulated and, where available, observed flow, so that a
 model-derived result can be checked against the data that constrained it.
@@ -39,12 +39,12 @@ Two corrections to the earlier reporting:
     numbers) and r2_local (the honest within-country skill), pooled, per country, and
     summarised as a median and a catchment-weighted mean over countries.
 
-    python stage3_full_synthesis.py --stage2 <stage2_DJF.parquet> \
-        --stage2c <stage2c_DJF.parquet> --stage2obs <stage2_obs_DJF.parquet> \
-        --join <seasonal_join_DJF.parquet> --stage1 <stage1_DJF.parquet> \
+    python physiographic_synthesis.py --strength-memory <response_strength_memory_DJF.parquet> \
+        --timing <response_timing_DJF.parquet> --observed <response_observed_DJF.parquet> \
+        --join <seasonal_join_DJF.parquet> --signal <precipitation_signal_DJF.parquet> \
         --attrs <attributes.parquet> --refined <..._refined.csv> \
         --nesting <nesting_flags.csv> --outdir <caravan_derived/> [--independent-only]
-    python stage3_full_synthesis.py --selftest
+    python physiographic_synthesis.py --selftest
 """
 from __future__ import annotations
 import argparse
@@ -59,7 +59,7 @@ KFOLDS = 10
 SEED = 0
 MIN_COUNTRY_N = 10   # countries smaller than this give an unstable (or undefined) local
                      # R2; summary statistics over countries are restricted to these
-SIG_MIN = 0.2        # peak |r| gate on a lag profile, as in stage2c
+SIG_MIN = 0.2        # peak |r| gate on a lag profile, as in response_timing
 NBOOT = 1999
 MIN_WINTERS_GAIN = 20
 GB = {"England", "Scotland", "Wales", "Great Britain"}
@@ -98,9 +98,9 @@ def logit(x, lo=1e-4):
 
 # ----------------------------------------------------------------------- assembly
 
-def observed_gain(join: pd.DataFrame, stage1: pd.DataFrame) -> pd.DataFrame:
-    """Gain of the OBSERVED DJF flow anomaly on the Stage-1 fitted winter forcing."""
-    b = stage1.set_index("gauge_id")
+def observed_gain(join: pd.DataFrame, signal: pd.DataFrame) -> pd.DataFrame:
+    """Gain of the OBSERVED DJF flow anomaly on the fitted winter forcing."""
+    b = signal.set_index("gauge_id")
     rows = []
     for gid, g in join.groupby("gauge_id", sort=False):
         if gid not in b.index:
@@ -117,17 +117,17 @@ def observed_gain(join: pd.DataFrame, stage1: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def prepare(stage2, stage2c, stage2obs, gain_obs, attrs, refined, nesting):
-    d = stage2.merge(attrs, on="gauge_id", how="left")
+def prepare(strength_memory, timing, observed, gain_obs, attrs, refined, nesting):
+    d = strength_memory.merge(attrs, on="gauge_id", how="left")
     country = refined.set_index("gauge_id")["country"]
     d["country"] = d.gauge_id.map(country)
     d["country"] = d["country"].where(~d["country"].isin(GB), "Great Britain")
 
-    d = d.merge(stage2c[["gauge_id", "reg_lag", "late_frac", "sig"]], on="gauge_id", how="left")
-    if stage2obs is not None:
+    d = d.merge(timing[["gauge_id", "reg_lag", "late_frac", "sig"]], on="gauge_id", how="left")
+    if observed is not None:
         keep = ["gauge_id", "tau_Qobs", "ac1_Qobs", "tau_Qsim_m", "ac1_Qsim_m",
                 "reg_lag_obs", "late_frac_obs", "sig_obs"]
-        d = d.merge(stage2obs[[c for c in keep if c in stage2obs.columns]],
+        d = d.merge(observed[[c for c in keep if c in observed.columns]],
                     on="gauge_id", how="left")
     if gain_obs is not None:
         d = d.merge(gain_obs, on="gauge_id", how="left")
@@ -366,7 +366,7 @@ def analyse(d, response, label, nboot=NBOOT):
                       "se_clustered": float(se[j]), "t": float(t[j]),
                       "p_wild_bootstrap": pb})
     # Six predictors are tested on every response, so the bootstrap p-values get the same
-    # false-discovery-rate control already applied to the Stage-1 precipitation regression.
+    # false-discovery-rate control already applied to the precipitation regression.
     for row, q in zip(coefs, bh_fdr([c["p_wild_bootstrap"] for c in coefs])):
         row["q_bh"] = float(q)
     summary = {"response": response, "label": label, "marginal_R2": marg,
@@ -455,7 +455,7 @@ def selftest():
 
 def main():
     ap = argparse.ArgumentParser()
-    for f in ["stage2", "stage2c", "stage2obs", "join", "stage1", "attrs", "refined",
+    for f in ["strength-memory", "timing", "observed", "join", "signal", "attrs", "refined",
               "nesting", "outdir"]:
         ap.add_argument(f"--{f}")
     ap.add_argument("--independent-only", action="store_true")
@@ -466,17 +466,17 @@ def main():
     if a.selftest:
         selftest()
         return
-    if not all([a.stage2, a.stage2c, a.attrs, a.refined, a.outdir]):
-        ap.error("--stage2 --stage2c --attrs --refined --outdir required unless --selftest")
+    if not all([a.strength_memory, a.timing, a.attrs, a.refined, a.outdir]):
+        ap.error("--strength-memory --timing --attrs --refined --outdir required unless --selftest")
 
-    stage2 = pd.read_parquet(a.stage2)
-    stage2c = pd.read_parquet(a.stage2c)
-    stage2obs = pd.read_parquet(a.stage2obs) if a.stage2obs else None
+    strength_memory = pd.read_parquet(a.strength_memory)
+    timing = pd.read_parquet(a.timing)
+    observed = pd.read_parquet(a.observed) if a.observed else None
     nesting = pd.read_csv(a.nesting) if a.nesting else None
     gain_obs = None
-    if a.join and a.stage1:
-        gain_obs = observed_gain(pd.read_parquet(a.join), pd.read_parquet(a.stage1))
-    d = prepare(stage2, stage2c, stage2obs, gain_obs, pd.read_parquet(a.attrs),
+    if a.join and a.signal:
+        gain_obs = observed_gain(pd.read_parquet(a.join), pd.read_parquet(a.signal))
+    d = prepare(strength_memory, timing, observed, gain_obs, pd.read_parquet(a.attrs),
                 pd.read_csv(a.refined), nesting)
     if a.independent_only:
         if "independent" not in d.columns:
@@ -504,7 +504,7 @@ def main():
     per = pd.concat(all_per, ignore_index=True)
     tag = a.tag or ("independent" if a.independent_only else "full")
     for name, obj in [("coeffs", coefs), ("summary", summ), ("by_country", per)]:
-        path = os.path.join(a.outdir, f"stage3_full_{name}_{tag}.csv")
+        path = os.path.join(a.outdir, f"physiographic_{name}_{tag}.csv")
         obj.to_csv(path, index=False)
         print(f"wrote {path}", flush=True)
     validate(summ, coefs)

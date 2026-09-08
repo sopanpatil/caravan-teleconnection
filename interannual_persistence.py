@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 """
-stage2b_tc_persistence.py
+interannual_persistence.py
 
-Teleconnection-SIGNAL persistence. Stage-2's tau is
+Teleconnection-SIGNAL persistence. the intrinsic memory tau is
 the store's GENERIC autocorrelation timescale -- it contains no teleconnection
-information. This stage instead measures how long the *teleconnection-attributable*
+information. This script instead measures how long the *teleconnection-attributable*
 flow anomaly lingers ACROSS winters: a memoryless catchment responds only to this
 winter's forcing, while an aquifer carries a wet NAO+ winter's anomaly into the
 following winter(s) even when the next winter's NAO is neutral.
 
-Metric. For each catchment we build the Stage-1 fitted forcing (the teleconnection-
+Metric. For each catchment we build the fitted forcing (the teleconnection-
 attributable DJF precipitation anomaly)
 
-    Phat'(y) = sum_k beta_k * index_k(y)          (beta_k from stage1_sensitivity)
+    Phat'(y) = sum_k beta_k * index_k(y)          (beta_k from fit_precipitation_signal)
 
 and fit, per response store/flow DJF anomaly Q'(y), a geometric (Koyck) distributed
 lag with a single decay phi and a gain g:
@@ -30,17 +30,17 @@ pick the phi that maximises R^2. The persistence is then
 phi ~ 0  -> flashy, the signal is spent within its own winter; phi large -> the
 teleconnection anomaly persists across winters. phi is capped at PHI_MAX (timescale
 ~6 winters); reaching the cap is flagged (tc_cens), the winter-resolution analogue of
-Stage-2's tau censoring -- a ~34-68 winter record cannot resolve arbitrarily long
+the tau censoring -- a ~34-68 winter record cannot resolve arbitrarily long
 interannual persistence.
 
 Applied per store this shows the two reservoirs IN THE TELECONNECTION SIGNAL itself
 (LZ carries phi>0 across winters; UZ/SM/SP do not), and tc_tau(Qsim) is cross-checked
-against Stage-2's intrinsic tau_Qsim / ac1_Qsim: if they agree, the intrinsic memory
+against the intrinsic tau_Qsim / ac1_Qsim: if they agree, the intrinsic memory
 IS the teleconnection-signal persistence, which justifies carrying tau downstream.
 
-    python stage2b_tc_persistence.py --join <seasonal_join_DJF.parquet> \
-        --stage1 <stage1_DJF.parquet> --stage2 <stage2_DJF.parquet> --out <stage2b_DJF.parquet>
-    python stage2b_tc_persistence.py --selftest
+    python interannual_persistence.py --join <seasonal_join_DJF.parquet> \
+        --signal <precipitation_signal_DJF.parquet> --strength-memory <response_strength_memory_DJF.parquet> --out <interannual_persistence_DJF.parquet>
+    python interannual_persistence.py --selftest
 """
 from __future__ import annotations
 import argparse
@@ -118,8 +118,8 @@ def fit_persistence(phat: np.ndarray, y: np.ndarray, years: np.ndarray) -> dict:
             "gain0": g, "r2": r2, "n": int(keep.sum()), "tc_cens": bool(phi >= PHI_MAX)}
 
 
-def run(join: pd.DataFrame, stage1: pd.DataFrame, stage2: pd.DataFrame | None) -> pd.DataFrame:
-    betas = stage1.set_index("gauge_id")
+def run(join: pd.DataFrame, signal: pd.DataFrame, strength_memory: pd.DataFrame | None) -> pd.DataFrame:
+    betas = signal.set_index("gauge_id")
     rows = []
     for (gid, src), g in join.groupby(["gauge_id", "source"], sort=False):
         if gid not in betas.index:
@@ -138,15 +138,15 @@ def run(join: pd.DataFrame, stage1: pd.DataFrame, stage2: pd.DataFrame | None) -
                 rec[f"{k}_{resp}"] = v
         rows.append(rec)
     res = pd.DataFrame(rows)
-    if stage2 is not None:
+    if strength_memory is not None:
         keep = ["gauge_id", "tau_Qsim", "ac1_Qsim", "tau_LZ", "ac1_LZ",
                 "gauge_lat", "gauge_lon"]
-        res = res.merge(stage2[keep], on="gauge_id", how="left")
+        res = res.merge(strength_memory[keep], on="gauge_id", how="left")
     return res
 
 
 def validate(res: pd.DataFrame):
-    print("=== Stage-2b teleconnection-signal persistence ===", flush=True)
+    print("=== teleconnection-signal persistence ===", flush=True)
     print(f"catchments: {len(res)}", flush=True)
     for resp in RESPONSES:
         phi = res[f"phi_{resp}"].dropna()
@@ -162,7 +162,7 @@ def validate(res: pd.DataFrame):
         frac = (res[f"phi_{resp}"] > 0.2).mean() * 100
         print(f"  {resp:4s}: {frac:5.1f}%", flush=True)
     if "tau_Qsim" in res.columns:
-        print("\n=== closing the loop: tc-persistence vs Stage-2 intrinsic memory ===",
+        print("\n=== closing the loop: tc-persistence vs intrinsic memory ===",
               flush=True)
         for a, b, lab in [("tc_tau_Qsim", "tau_Qsim", "tc_tau(Qsim) vs intrinsic tau_Qsim"),
                           ("phi_Qsim", "ac1_Qsim", "phi(Qsim) vs intrinsic ac1_Qsim"),
@@ -209,20 +209,20 @@ def selftest():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--join")
-    ap.add_argument("--stage1")
-    ap.add_argument("--stage2")
+    ap.add_argument("--signal")
+    ap.add_argument("--strength-memory")
     ap.add_argument("--out")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         selftest()
         return
-    if not (a.join and a.stage1 and a.out):
-        ap.error("--join, --stage1 and --out are required unless --selftest")
+    if not (a.join and a.signal and a.out):
+        ap.error("--join, --signal and --out are required unless --selftest")
     join = pd.read_parquet(a.join)
-    stage1 = pd.read_parquet(a.stage1)
-    stage2 = pd.read_parquet(a.stage2) if a.stage2 else None
-    res = run(join, stage1, stage2)
+    signal = pd.read_parquet(a.signal)
+    strength_memory = pd.read_parquet(a.strength_memory) if a.strength_memory else None
+    res = run(join, signal, strength_memory)
     res.to_parquet(a.out)
     print(f"wrote {a.out}  ({len(res)} catchments)", flush=True)
     validate(res)

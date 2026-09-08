@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-build_seasonal_join.py
+build_seasonal_table.py
 
-Stage-1/Stage-2 input builder. Collapses the daily obs-forced HBV state parquets
+Input builder for the response analyses. Collapses the daily obs-forced HBV state parquets
 (generate_states.py) into per-catchment SEASONAL means + anomalies keyed by
 winter-year, then joins the teleconnection indices (fetch_teleconnection_indices.py).
 
@@ -16,7 +16,7 @@ Spin-up: each catchment is trimmed to dates >= its manifest `spinup_end`
 artefact) enters neither the seasonal values nor the climatology used for anomalies.
 
 Anomalies are per-catchment: value minus that catchment's own mean over its
-available post-spin-up winters (Stage-1 exploits within-catchment temporal
+available post-spin-up winters (fit_precipitation_signal.py exploits within-catchment temporal
 variability, so a per-catchment baseline is the right reference).
 
 Output (one row per catchment x winter_year):
@@ -32,7 +32,7 @@ import os
 import numpy as np
 import pandas as pd
 
-# variables carried through: Stage-1 driver (precip), Stage-2 stores (SM/SP/UZ/LZ),
+# variables carried through: precipitation-signal driver (precip), stores (SM/SP/UZ/LZ),
 # flow response (Qsim), snow flux (melt), covariates (temp/pet), validation (flow_obs)
 VARS = ["precip", "temp", "pet", "melt", "Qsim", "flow_obs", "SM", "SP", "UZ", "LZ"]
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-stage2_filtering.py
+response_strength_and_memory.py
 
 Stage-2 of the two-stage decomposition: how each catchment
 *transforms* the teleconnection signal. Two per-catchment quantities per store
@@ -20,16 +20,16 @@ Stage-2 of the two-stage decomposition: how each catchment
     tau(LZ) >> tau(SM) > tau(UZ) expected; tau(SP) meaningful only where snow is
     active (sp_active_frac).
 
-  GAIN -- seasonal (DJF) store/flow anomaly per unit of the Stage-1 *predicted*
-    rainfall signal P'_hat = sum_k beta_k * index_k (from stage1_sensitivity). OLS
+  GAIN -- seasonal (DJF) store/flow anomaly per unit of the fitted
+    rainfall signal P'_hat = sum_k beta_k * index_k (from fit_precipitation_signal). OLS
     slope of the store's DJF anomaly on P'_hat; normalising by P'_hat removes driver
     strength so gain is the per-unit response amplitude.
 
-Feeds the Stage-3 mixed-effects synthesis (tau_flow ~ storage attributes + (1|country)).
+Feeds the physiographic synthesis (tau_flow ~ storage attributes + (1|country)).
 
-    python stage2_filtering.py --states-dir <dir> --manifest <m.csv> \
-        --join <seasonal_join_DJF.parquet> --stage1 <stage1_DJF.parquet> --out <stage2.parquet>
-    python stage2_filtering.py --selftest
+    python response_strength_and_memory.py --states-dir <dir> --manifest <m.csv> \
+        --join <seasonal_join_DJF.parquet> --signal <precipitation_signal_DJF.parquet> --out <strength_memory.parquet>
+    python response_strength_and_memory.py --selftest
 """
 from __future__ import annotations
 import argparse
@@ -109,7 +109,7 @@ def catchment_tau(df: pd.DataFrame) -> dict:
 
 
 def catchment_gain(g: pd.DataFrame, betas: pd.Series) -> dict:
-    """Seasonal gain of each store DJF anomaly on the Stage-1 fitted signal."""
+    """Seasonal gain of each store DJF anomaly on the fitted signal."""
     phat = sum(betas[INDEX_BETA[ix]] * g[ix] for ix in INDEX_BETA)
     out = {}
     for s in STORES:
@@ -122,10 +122,10 @@ def catchment_gain(g: pd.DataFrame, betas: pd.Series) -> dict:
     return out
 
 
-def run(states_dir, manifest_path, join, stage1):
+def run(states_dir, manifest_path, join, signal):
     man = pd.read_csv(manifest_path).set_index("gauge_id")
     spinup = pd.to_datetime(man["spinup_end"])
-    betas = stage1.set_index("gauge_id")
+    betas = signal.set_index("gauge_id")
     gain_groups = {gid: g for gid, g in join.groupby("gauge_id", sort=False)}
 
     rows = []
@@ -153,7 +153,7 @@ def run(states_dir, manifest_path, join, stage1):
 
 
 def validate(res: pd.DataFrame):
-    print("=== Stage-2 memory: tau (e-folding, days) + ac1 (lag-1), medians ===", flush=True)
+    print("=== flow memory: tau (e-folding, days) + ac1 (lag-1), medians ===", flush=True)
     for s in STORES:
         tau = res[f"tau_{s}"].dropna()
         cens = res[f"cens_{s}"].mean() * 100
@@ -214,18 +214,18 @@ def main():
     ap.add_argument("--states-dir")
     ap.add_argument("--manifest")
     ap.add_argument("--join")
-    ap.add_argument("--stage1")
+    ap.add_argument("--signal")
     ap.add_argument("--out")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         selftest()
         return
-    if not all([a.states_dir, a.manifest, a.join, a.stage1, a.out]):
-        ap.error("--states-dir, --manifest, --join, --stage1, --out required unless --selftest")
+    if not all([a.states_dir, a.manifest, a.join, a.signal, a.out]):
+        ap.error("--states-dir, --manifest, --join, --signal, --out required unless --selftest")
     join = pd.read_parquet(a.join)
-    stage1 = pd.read_parquet(a.stage1)
-    res = run(a.states_dir, a.manifest, join, stage1)
+    signal = pd.read_parquet(a.signal)
+    res = run(a.states_dir, a.manifest, join, signal)
     res.to_parquet(a.out)
     print(f"wrote {a.out}  ({len(res)} catchments)", flush=True)
     validate(res)

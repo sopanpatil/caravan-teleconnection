@@ -4,7 +4,7 @@ fig3_snowmelt_timing.py
 
 Produces Figure 3 of the manuscript.
 
-Stage-2c timing figure: the snowmelt phase shift. The winter teleconnection signal
+Timing figure: the snowmelt phase shift. The winter teleconnection signal
 is tracked across the whole water year, and the flow response separates three
 registrations in time (fast winter / sustained aquifer / delayed snowmelt).
 
@@ -16,8 +16,8 @@ Three panels:
       the bounded phase-shift index -- snow-concentrated.
   (c) late-response fraction vs snow cover across the sample (the Spearman control).
 
-    python figures/fig3_snowmelt_timing.py --stage2c <stage2c_DJF.parquet> \
-        --attrs <attributes.parquet> --stage1 <stage1_DJF.parquet> \
+    python figures/fig3_snowmelt_timing.py --timing <response_timing_DJF.parquet> \
+        --attrs <attributes.parquet> --signal <precipitation_signal_DJF.parquet> \
         --indices <teleconnection_seasonal.csv> --states-dir <dir> \
         --manifest <states_manifest.csv> --out figures/fig3_snowmelt_timing.png
 """
@@ -166,18 +166,18 @@ def make(s2c, attrs, betas, indices, states_dir, spinup, out):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage2c", required=True)
+    ap.add_argument("--timing", required=True)
     ap.add_argument("--attrs", required=True)
-    ap.add_argument("--stage1", required=True)
+    ap.add_argument("--signal", required=True)
     ap.add_argument("--indices", required=True)
     ap.add_argument("--states-dir", required=True)
     ap.add_argument("--manifest", required=True)
     ap.add_argument("--out", default="figures/fig3_snowmelt_timing.png")
     a = ap.parse_args()
-    betas = pd.read_parquet(a.stage1).set_index("gauge_id")
+    betas = pd.read_parquet(a.signal).set_index("gauge_id")
     indices = pd.read_csv(a.indices).set_index("winter_year")
     spinup = pd.to_datetime(pd.read_csv(a.manifest).set_index("gauge_id")["spinup_end"])
-    make(pd.read_parquet(a.stage2c), pd.read_parquet(a.attrs), betas, indices,
+    make(pd.read_parquet(a.timing), pd.read_parquet(a.attrs), betas, indices,
          a.states_dir, spinup, a.out)
 
 

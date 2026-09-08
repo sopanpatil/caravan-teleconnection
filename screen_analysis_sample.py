@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-refine_calibration.py
+screen_analysis_sample.py
 
 Downstream refinement of the aggregated calibration table
 (`calibrated_parameters_ALL.csv`). Adds catchment attributes and two screens,

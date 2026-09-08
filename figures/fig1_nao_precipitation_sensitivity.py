@@ -4,7 +4,7 @@ fig1_nao_precipitation_sensitivity.py
 
 Produces Figure 1 of the manuscript.
 
-Map a Stage-1 sensitivity coefficient (default beta_NAO) across the catchment
+Map a precipitation-sensitivity coefficient (default beta_NAO) across the catchment
 sample. Points are coloured by beta on a symmetric diverging scale; FDR-significant
 catchments (q<0.05) are drawn larger with a dark edge, non-significant ones smaller
 and faded, so the map shows both the beta field and where it is trustworthy.
@@ -13,8 +13,8 @@ Coastlines/borders via cartopy when its Natural Earth data is reachable/cached;
 otherwise the map falls back to a plain lon/lat frame (the 2,135 points trace
 Europe well enough on their own).
 
-    python figures/fig1_nao_precipitation_sensitivity.py --stage1 <stage1_DJF.parquet>
-    python figures/fig1_nao_precipitation_sensitivity.py --stage1 <...> --index all --outdir <figures/>
+    python figures/fig1_nao_precipitation_sensitivity.py --signal <precipitation_signal_DJF.parquet>
+    python figures/fig1_nao_precipitation_sensitivity.py --signal <...> --index all --outdir <figures/>
 
   With no --out, writes the published Figure 1 path (and the .pdf beside it).
   Run from the repository root, since that default path is relative to it.
@@ -95,15 +95,15 @@ def plot_one(res: pd.DataFrame, idx: str, out: str):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage1", required=True)
+    ap.add_argument("--signal", required=True)
     ap.add_argument("--index", default="NAO", help="NAO|EA|EAWR|SCA|all")
     ap.add_argument("--out", default="figures/fig1_nao_precipitation_sensitivity.png")
     ap.add_argument("--outdir", default=".")
     a = ap.parse_args()
-    res = pd.read_parquet(a.stage1)
+    res = pd.read_parquet(a.signal)
     idxs = INDICES if a.index == "all" else [a.index]
     for idx in idxs:
-        out = a.out if (a.out and a.index != "all") else os.path.join(a.outdir, f"stage1_beta_{idx}.png")
+        out = a.out if (a.out and a.index != "all") else os.path.join(a.outdir, f"precipitation_sensitivity_{idx}.png")
         plot_one(res, idx, out)
 
 

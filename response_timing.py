@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 """
-stage2c_registration_lag.py
+response_timing.py
 
 Teleconnection-signal TIMING. A catchment filter has two independent properties: how LONG it
-holds an anomaly (Stage-2 memory tau) and WHEN it releases the signal (this stage).
-Stage-2 works on DJF flow only and is therefore blind to the snowmelt registration,
+holds an anomaly (the memory tau) and WHEN it releases the signal (this script).
+The memory estimate works on DJF flow only and is therefore blind to the snowmelt registration,
 in which a winter teleconnection anomaly is stored as snow and re-emerges months
 later at melt. Here we keep the FORCING strictly winter and track the RESPONSE across
 the whole water year to locate that registration in time.
 
-Method. For each catchment we build the Stage-1 fitted winter forcing
+Method. For each catchment we build the fitted winter forcing
 Phat'(y) = sum_k beta_k * index_k(y) (one value per winter-year), and we correlate it
 with the catchment's monthly flow anomaly at every lag L = 0..11 months after the
 December the winter begins (L=0 Dec(y-1), 1 Jan, 2 Feb, 3 Mar, ... 7 Jul, ...). The
@@ -20,7 +20,7 @@ lag profile r(L) is the signal's registration in time:
   * snow        -> a second peak at L=6-8 (Jun-Aug): the winter signal re-emerges at melt.
 
 From the noise-corrected energy profile w(L) = max(r(L)^2 - 1/(n-2), 0) we report a
-matched pair (mirroring Stage-2's interpretable-tau + bounded-ac1 design):
+matched pair (mirroring the interpretable-tau + bounded-ac1 design):
 
   reg_lag    energy-weighted centroid lag (months) -- INTERPRETABLE timing, sign-agnostic
              so the melt registration counts whatever its sign.
@@ -35,7 +35,7 @@ matched pair (mirroring Stage-2's interpretable-tau + bounded-ac1 design):
              later, sum(w[3:7]) / sum(w[0:7]) -- how long the forced anomaly LASTS, as
              opposed to when it arrives. NaN where the early window carries no energy.
 
-Why retention exists. Memory (Stage-2 tau) is estimated from the flow series alone and
+Why retention exists. Memory (the memory tau) is estimated from the flow series alone and
 never refers to Phat', so it is an INTRINSIC catchment timescale; that it also governs
 how long a teleconnection anomaly persists is a claim to be tested, not assumed. This
 metric is that test. It is deliberately ONE-SIDED, cut off at L=6, because the obvious
@@ -49,10 +49,10 @@ cleanly, retention rises with memory at rho ~ +0.43 (and ~ +0.44 against the gro
 timescale tau_LZ), against ~ +0.22 over the whole sample. See Text S2 of the
 manuscript.
 
-    python stage2c_registration_lag.py --states-dir <dir> --manifest <m.csv> \
-        --stage1 <stage1_DJF.parquet> --indices <teleconnection_seasonal.csv> \
-        --stage2 <stage2_DJF.parquet> --out <stage2c_DJF.parquet>
-    python stage2c_registration_lag.py --selftest
+    python response_timing.py --states-dir <dir> --manifest <m.csv> \
+        --signal <precipitation_signal_DJF.parquet> --indices <teleconnection_seasonal.csv> \
+        --strength-memory <response_strength_memory_DJF.parquet> --out <response_timing_DJF.parquet>
+    python response_timing.py --selftest
 """
 from __future__ import annotations
 import argparse
@@ -142,10 +142,10 @@ def metrics(r: np.ndarray, nL: np.ndarray) -> dict:
             "retention": retention_ratio(w, L), "n_lags": int(fin.sum())}
 
 
-def run(states_dir, manifest_path, stage1, indices, stage2):
+def run(states_dir, manifest_path, signal, indices, strength_memory):
     man = pd.read_csv(manifest_path).set_index("gauge_id")
     spinup = pd.to_datetime(man["spinup_end"])
-    betas = stage1.set_index("gauge_id")
+    betas = signal.set_index("gauge_id")
     idx_cols = list(BETA)
     rows = []
     files = sorted(glob.glob(os.path.join(states_dir, "*", "*.parquet")))
@@ -166,14 +166,14 @@ def run(states_dir, manifest_path, stage1, indices, stage2):
         if i % 500 == 0:
             print(f"  {i}/{len(files)} catchments processed", flush=True)
     res = pd.DataFrame(rows)
-    if stage2 is not None:
-        res = res.merge(stage2[["gauge_id", "tau_Qsim", "ac1_Qsim", "sp_active_frac",
+    if strength_memory is not None:
+        res = res.merge(strength_memory[["gauge_id", "tau_Qsim", "ac1_Qsim", "sp_active_frac",
                                 "gauge_lat", "gauge_lon"]], on="gauge_id", how="left")
     return res
 
 
 def validate(res: pd.DataFrame):
-    print("=== Stage-2c registration lag (timing of the winter signal in flow) ===",
+    print("=== registration lag (timing of the winter signal in flow) ===",
           flush=True)
     ok = res[res.sig > SIG_MIN]        # catchments where the teleconnection signal is present
     print(f"catchments: {len(res)}   with detectable signal (peak|r|>0.2): {len(ok)}",
@@ -280,21 +280,21 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--states-dir")
     ap.add_argument("--manifest")
-    ap.add_argument("--stage1")
+    ap.add_argument("--signal")
     ap.add_argument("--indices")
-    ap.add_argument("--stage2")
+    ap.add_argument("--strength-memory")
     ap.add_argument("--out")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         selftest()
         return
-    if not all([a.states_dir, a.manifest, a.stage1, a.indices, a.out]):
-        ap.error("--states-dir, --manifest, --stage1, --indices, --out required unless --selftest")
-    stage1 = pd.read_parquet(a.stage1)
+    if not all([a.states_dir, a.manifest, a.signal, a.indices, a.out]):
+        ap.error("--states-dir, --manifest, --signal, --indices, --out required unless --selftest")
+    signal = pd.read_parquet(a.signal)
     indices = pd.read_csv(a.indices).set_index("winter_year")
-    stage2 = pd.read_parquet(a.stage2) if a.stage2 else None
-    res = run(a.states_dir, a.manifest, stage1, indices, stage2)
+    strength_memory = pd.read_parquet(a.strength_memory) if a.strength_memory else None
+    res = run(a.states_dir, a.manifest, signal, indices, strength_memory)
     res.to_parquet(a.out)
     print(f"wrote {a.out}  ({len(res)} catchments)", flush=True)
     validate(res)

@@ -33,7 +33,7 @@ Two products are written:
                  on one main stem (distance under the larger equivalent radius AND
                  area ratio >= 0.5), reported to quantify the duplication directly.
 
-    python nesting_screen.py --stage2 <stage2_DJF.parquet> --refined <..._refined.csv> \
+    python nesting_screen.py --strength-memory <response_strength_memory_DJF.parquet> --refined <..._refined.csv> \
         --out <nesting_flags.csv>
     python nesting_screen.py --selftest
 """
@@ -180,7 +180,7 @@ def selftest():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage2")
+    ap.add_argument("--strength-memory")
     ap.add_argument("--refined")
     ap.add_argument("--out")
     ap.add_argument("--pairs-out")
@@ -189,9 +189,9 @@ def main():
     if a.selftest:
         selftest()
         return
-    if not all([a.stage2, a.out]):
-        ap.error("--stage2 and --out required unless --selftest")
-    d = pd.read_parquet(a.stage2)[["gauge_id", "gauge_lat", "gauge_lon", "area", "source"]]
+    if not all([a.strength_memory, a.out]):
+        ap.error("--strength-memory and --out required unless --selftest")
+    d = pd.read_parquet(a.strength_memory)[["gauge_id", "gauge_lat", "gauge_lon", "area", "source"]]
     if a.refined:
         country = pd.read_csv(a.refined).set_index("gauge_id")["country"]
         d["country"] = d.gauge_id.map(country)
