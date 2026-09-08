@@ -49,11 +49,14 @@ Three tiers, of which the smallest and most important is carried here:
 |---|---|
 | Raw Caravan (~57 GB) | Download with `download_caravan.sh`. Distributed by the Caravan authors and its extension authors; not redistributed here. |
 | Daily HBV states (~7 GB) | Regenerate with `generate_states.py`. Working intermediate, not carried. |
-| **Derived per-catchment products (~32 MB)** | **Tracked, in [`derived_data/`](derived_data/).** Every number in the Results and in SI Tables S1-S3 comes from these, so a clone reproduces the paper without the 57 GB download or the calibration run. |
+| **Derived per-catchment products (~29 MB)** | **Tracked, in [`derived_data/`](derived_data/).** Every number in the Results and in SI Tables S1-S3 comes from these, so a clone reproduces the paper without the 57 GB download or the calibration run. |
 
-Two small inputs are also tracked, because they are cheap and pin the analysis:
-`teleconnection_seasonal.csv` (the CPC indices as fetched and seasonally
-averaged) and `dk_flow_availability.csv`.
+One small input is also tracked, because it is cheap and pins the analysis:
+`teleconnection_seasonal.csv`, the CPC indices as fetched and seasonally
+averaged. `dk_flow_availability.csv` sits alongside it as provenance rather
+than as an input, and no script reads it: it records the daily-record coverage
+of all 308 Danish gauges that were calibrated, which is the audit behind the
+Danish sample, 263 of which pass the screen into the analysis set.
 
 Note the licence split: the code is MIT, the data in `derived_data/` are
 CC BY 4.0. See `LICENSE` and `derived_data/README.md`.
@@ -69,7 +72,7 @@ what you want; `--help` lists them. The two verification scripts take a single
 
 | Script | Role |
 |---|---|
-| `download_caravan.sh` | Fetch Caravan base + the DK, LamaH-CE and GRDC extensions |
+| `download_caravan.sh` | Fetch Caravan base (which carries the CAMELS-GB and LamaH-CE sources) plus the CAMELS-DK and GRDC-Caravan extensions |
 | `caravan_io.py` | Loader for the Caravan per-basin netCDF schema |
 | `pet_penman_monteith.py` | FAO-56 Penman-Monteith PET, computed uniformly for every country |
 | `calibrate_single_caravan.py`, `run_calibration_batch.py` | Per-catchment SCE-UA calibration of HBV against observed discharge |

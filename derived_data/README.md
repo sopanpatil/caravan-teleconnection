@@ -4,13 +4,14 @@ Per-catchment derived products underlying the paper. Every number in the
 Results, and every entry in Supporting Information Tables S1 to S3, comes from
 these files, so they are versioned here rather than left to be regenerated.
 
-They are small enough to carry (about 32 MB, one file of 28 MB and fifteen
-under 1.3 MB), and carrying them means a clone reproduces every published
+They are small enough to carry (about 29 MB, one file of 25 MB and fifteen
+under 1.2 MB), and carrying them means a clone reproduces every published
 number without the 57 GB raw Caravan download or the calibration run.
 
 - **Model**: https://github.com/sopanpatil/hbv-model, doi:10.5281/zenodo.21860981.
-- **Source data**: Caravan and its CAMELS-GB, CAMELS-DK, LamaH-CE and
-  GRDC-Caravan extensions, cited in the paper's Open Research statement. Raw
+- **Source data**: Caravan, including the CAMELS-GB and LamaH-CE base sources
+  and the CAMELS-DK and GRDC-Caravan extensions, cited in the paper's Open
+  Research statement. Raw
   Caravan is not redistributed here; download it with `../download_caravan.sh`.
 - **Regenerating these**: see the pipeline table in the top-level README.
 

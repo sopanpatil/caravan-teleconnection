@@ -7,6 +7,12 @@ authors:
     given-names: Sopan D.
     orcid: "https://orcid.org/0000-0002-8575-5220"
     affiliation: "Bangor University"
+  - family-names: Dallison
+    given-names: Richard J. H.
+    affiliation: "Bangor University"
+  - family-names: Jahanshahi
+    given-names: Afshin
+    affiliation: "University of Galway"
 version: "1.0.0"
 license: MIT
 repository-code: "https://github.com/sopanpatil/caravan-teleconnection"
@@ -54,6 +60,13 @@ preferred-citation:
     - family-names: Patil
       given-names: Sopan D.
       orcid: "https://orcid.org/0000-0002-8575-5220"
+      affiliation: "Bangor University"
+    - family-names: Dallison
+      given-names: Richard J. H.
+      affiliation: "Bangor University"
+    - family-names: Jahanshahi
+      given-names: Afshin
+      affiliation: "University of Galway"
   year: 2026
   # journal: "..."               # add once the venue is settled
   # doi: "10.xxxx/xxxxxxxxxx"    # add once the article DOI is assigned

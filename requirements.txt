@@ -2,7 +2,7 @@
 #
 # Unpinned, since nothing here depends on a specific version. For the record,
 # the published results were produced on Python 3.12.11 with numpy 2.2.6,
-# pandas 2.3.0, scipy 1.15.2, statsmodels 0.14.4, matplotlib 3.10.3,
+# pandas 2.3.0, scipy 1.15.2, matplotlib 3.10.3,
 # pyarrow 19.0.1, xarray 2025.7.0, netCDF4 1.7.2, numba 0.61.2 and
 # cartopy 0.24.0.
 numpy
@@ -11,8 +11,6 @@ scipy
 pyarrow          # parquet I/O for every stage-1/2/3 intermediate
 xarray           # reads the Caravan per-basin netCDF timeseries (caravan_io.py)
 netCDF4          # xarray's netCDF backend for those files
-statsmodels      # cluster-robust OLS and the wild cluster bootstrap
-                 # (stage3_full_synthesis.py), and the stage-1 OLS fits
 matplotlib       # all figures (plot_*.py)
 numba            # JIT kernels inside hbv-model's hbv.py (external dependency)
 
