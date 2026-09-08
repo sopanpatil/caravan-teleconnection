@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
-plot_stage2_memory.py
+fig2_store_memory.py
+
+Produces Figure 2 of the manuscript.
 
 Stage-2 two-reservoir memory figure -- the paper's differentiator. The HBV
 filtering gives each store its own memory timescale tau (e-folding days of the
@@ -18,7 +20,10 @@ two highlighted reservoirs SP and LZ sit together, with LZ's aquifer tail;
 maps carry different colour scales, each matched to its own store. Maps reuse the
 Stage-1 cartopy/fallback convention.
 
-    python plot_stage2_memory.py --stage2 <stage2_DJF.parquet> --out <fig.png>
+    python figures/fig2_store_memory.py --stage2 <stage2_DJF.parquet>
+
+  With no --out, writes the published Figure 2 path (and the .pdf beside it).
+  Run from the repository root, since that default path is relative to it.
 """
 from __future__ import annotations
 import argparse

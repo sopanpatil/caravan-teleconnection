@@ -594,7 +594,7 @@ UNCHECKED = [
      "grouped by named country sets (Britain and Ireland; the Alps) that the "
      "archive does not carry as a field"),
     ("4.1", "latitude-band means -0.52, +0.41 and their significance shares",
-     "reproduced by plot_stage1_beta.py, which prints them"),
+     "reproduced by figures/fig1_nao_precipitation_sensitivity.py, which prints them"),
     ("4.4", "per-predictor coefficients, p and q",
      "Supporting Information Table S2 is rendered from stage3_full_coeffs_*.csv"),
     ("4.5", "per-country skill",
@@ -605,7 +605,7 @@ UNCHECKED = [
     ("SI Text S2", "retention values",
      "checked by verify_text_s2.py"),
     ("Figures", "all five",
-     "regenerate with the plot_*.py scripts and compare; figures 1, 2, 4 and 5 "
+     "regenerate with the figures/fig*.py scripts and compare; figures 1, 2, 4 and 5 "
      "rebuild from derived_data/ alone, figure 3 needs the daily state series"),
 ]
 

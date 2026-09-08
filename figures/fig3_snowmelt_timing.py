@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
-plot_stage2c_timing.py
+fig3_snowmelt_timing.py
+
+Produces Figure 3 of the manuscript.
 
 Stage-2c timing figure: the snowmelt phase shift. The winter teleconnection signal
 is tracked across the whole water year, and the flow response separates three
@@ -14,7 +16,7 @@ Three panels:
       the bounded phase-shift index -- snow-concentrated.
   (c) late-response fraction vs snow cover across the sample (the Spearman control).
 
-    python plot_stage2c_timing.py --stage2c <stage2c_DJF.parquet> \
+    python figures/fig3_snowmelt_timing.py --stage2c <stage2c_DJF.parquet> \
         --attrs <attributes.parquet> --stage1 <stage1_DJF.parquet> \
         --indices <teleconnection_seasonal.csv> --states-dir <dir> \
         --manifest <states_manifest.csv> --out figures/fig3_snowmelt_timing.png

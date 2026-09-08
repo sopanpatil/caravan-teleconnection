@@ -103,12 +103,16 @@ what you want; `--help` lists them. The two verification scripts take a single
 
 **Figures**
 
+Each figure script lives in `figures/` and is named for the figure it writes,
+alongside that figure's `.png` and `.pdf`. Run them from the repository root;
+with no `--out` each writes its published path.
+
 | Script | Figure |
 |---|---|
-| `plot_stage1_beta.py` | `figures/fig1_nao_precipitation_sensitivity` |
-| `plot_stage2_memory.py` | `figures/fig2_store_memory` |
-| `plot_stage2c_timing.py` | `figures/fig3_snowmelt_timing` |
-| `plot_validation_and_transfer.py` | `figures/fig4_observed_validation` and `fig5_physiography_and_transfer` |
+| `figures/fig1_nao_precipitation_sensitivity.py` | Figure 1 |
+| `figures/fig2_store_memory.py` | Figure 2 |
+| `figures/fig3_snowmelt_timing.py` | Figure 3 |
+| `figures/fig4_fig5_validation_and_transfer.py` | Figures 4 and 5 (`fig4_observed_validation`, `fig5_physiography_and_transfer`) |
 
 ## Reproducing from `derived_data/`
 

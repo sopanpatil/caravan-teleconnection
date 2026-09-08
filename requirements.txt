@@ -11,11 +11,11 @@ scipy
 pyarrow          # parquet I/O for every stage-1/2/3 intermediate
 xarray           # reads the Caravan per-basin netCDF timeseries (caravan_io.py)
 netCDF4          # xarray's netCDF backend for those files
-matplotlib       # all figures (plot_*.py)
+matplotlib       # all figures (figures/fig*.py)
 numba            # JIT kernels inside hbv-model's hbv.py (external dependency)
 
-# Optional. Coastlines and borders on the map panels of plot_stage1_beta.py,
-# plot_stage2_memory.py and plot_stage2c_timing.py. Every one of those falls
+# Optional. Coastlines and borders on the map panels of Figures 1 to 3
+# (figures/fig1_*.py, fig2_*.py, fig3_*.py). Every one of those falls
 # back to a plain lon/lat frame when cartopy or its Natural Earth cache is
 # unavailable, so the figures still build without it.
 # cartopy

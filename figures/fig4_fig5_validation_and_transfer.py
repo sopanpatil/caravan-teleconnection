@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """
-plot_validation_and_transfer.py
+fig4_fig5_validation_and_transfer.py
 
-Two figures for the revised manuscript.
+Produces Figures 4 and 5 of the manuscript: one script, because both figures
+read the same Stage-2/Stage-3 products and share their plotting helpers.
 
   --out-validation  Observation-side validation of the model-derived filter properties.
       (a) memory: e-folding tau of observed vs simulated flow, log-log, 1:1 line.
@@ -27,11 +28,15 @@ Two figures for the revised manuscript.
   have opposite remedies -- a few local gauges fix a level error, nothing national fixes
   an ordering error. The gap between the red and orange bars is the level component.
 
-    python plot_validation_and_transfer.py --stage2 <stage2_DJF.parquet> \
+    python figures/fig4_fig5_validation_and_transfer.py --stage2 <stage2_DJF.parquet> \
         --stage2c <stage2c_DJF.parquet> --stage2obs <stage2_obs_DJF.parquet> \
         --summary <stage3_full_summary_full.csv> --coeffs <stage3_full_coeffs_full.csv> \
         --by-country <stage3_full_by_country_full.csv> \
-        --out-validation <fig1.png> --out-transfer <fig2.png>
+        [--out-validation <fig4.png>] [--out-transfer <fig5.png>]
+
+  With neither given, writes the published Figure 4 and Figure 5 paths (and the
+  .pdfs beside them). Run from the repository root: those defaults are relative
+  to it.
 """
 from __future__ import annotations
 import argparse
@@ -239,9 +244,12 @@ def fig_transfer(summary, coeffs, by_country, path):
 
 def main():
     ap = argparse.ArgumentParser()
-    for f in ["stage2", "stage2c", "stage2obs", "summary", "coeffs", "by-country",
-              "out-validation", "out-transfer"]:
+    for f in ["stage2", "stage2c", "stage2obs", "summary", "coeffs", "by-country"]:
         ap.add_argument(f"--{f}")
+    ap.add_argument("--out-validation",
+                    default="figures/fig4_observed_validation.png")
+    ap.add_argument("--out-transfer",
+                    default="figures/fig5_physiography_and_transfer.png")
     a = ap.parse_args()
 
     d = pd.read_parquet(a.stage2obs).merge(

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
-plot_stage1_beta.py
+fig1_nao_precipitation_sensitivity.py
+
+Produces Figure 1 of the manuscript.
 
 Map a Stage-1 sensitivity coefficient (default beta_NAO) across the catchment
 sample. Points are coloured by beta on a symmetric diverging scale; FDR-significant
@@ -11,8 +13,11 @@ Coastlines/borders via cartopy when its Natural Earth data is reachable/cached;
 otherwise the map falls back to a plain lon/lat frame (the 2,135 points trace
 Europe well enough on their own).
 
-    python plot_stage1_beta.py --stage1 <stage1_DJF.parquet> --index NAO --out <fig.png>
-    python plot_stage1_beta.py --stage1 <...> --index all --outdir <figures/>
+    python figures/fig1_nao_precipitation_sensitivity.py --stage1 <stage1_DJF.parquet>
+    python figures/fig1_nao_precipitation_sensitivity.py --stage1 <...> --index all --outdir <figures/>
+
+  With no --out, writes the published Figure 1 path (and the .pdf beside it).
+  Run from the repository root, since that default path is relative to it.
 """
 from __future__ import annotations
 import argparse
@@ -92,7 +97,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage1", required=True)
     ap.add_argument("--index", default="NAO", help="NAO|EA|EAWR|SCA|all")
-    ap.add_argument("--out", default=None)
+    ap.add_argument("--out", default="figures/fig1_nao_precipitation_sensitivity.png")
     ap.add_argument("--outdir", default=".")
     a = ap.parse_args()
     res = pd.read_parquet(a.stage1)
