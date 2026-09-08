@@ -102,6 +102,8 @@ def main():
     a = ap.parse_args()
     res = pd.read_parquet(a.signal)
     idxs = INDICES if a.index == "all" else [a.index]
+    if a.index == "all":
+        os.makedirs(a.outdir, exist_ok=True)
     for idx in idxs:
         out = a.out if (a.out and a.index != "all") else os.path.join(a.outdir, f"precipitation_sensitivity_{idx}.png")
         plot_one(res, idx, out)

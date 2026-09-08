@@ -503,6 +503,7 @@ def main():
     summ = pd.DataFrame(all_summ)
     per = pd.concat(all_per, ignore_index=True)
     tag = a.tag or ("independent" if a.independent_only else "full")
+    os.makedirs(a.outdir, exist_ok=True)
     for name, obj in [("coeffs", coefs), ("summary", summ), ("by_country", per)]:
         path = os.path.join(a.outdir, f"physiographic_{name}_{tag}.csv")
         obj.to_csv(path, index=False)

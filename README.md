@@ -15,8 +15,10 @@ resulting physiographic relationships travel by withholding whole countries.
 
 ## Requirements
 
-`pip install -r requirements.txt`, plus the HBV model itself, which lives in a
-separate repository and is not on PyPI:
+Python 3.12 (the published results used 3.12.11; every pinned version is
+recorded at the top of `requirements.txt`). Then `pip install -r
+requirements.txt`, plus the HBV model itself, which lives in a separate
+repository and is not on PyPI:
 
 ```
 git clone https://github.com/sopanpatil/hbv-model
@@ -28,9 +30,13 @@ every map falls back to a plain lon/lat frame without it.
 
 ## Paths
 
-No path is baked in. The analysis scripts take every input and output as an
-explicit argument with no default, so a run states exactly which files it
-consumed. Two environment variables cover the rest:
+No input path is baked in. Every analysis script takes its inputs and outputs
+as explicit arguments, so a run states exactly which files it consumed. The
+defaults that do exist are there to make a fresh clone work unchanged: the
+figure scripts default `--out` to the published figure path, and
+`verify_manuscript.py`, `temperature_control.py` and `verify_text_s2.py`
+default `--derived` to `derived_data`. Two environment variables cover the
+rest:
 
 ```
 export HBV_MODEL_REPO=/path/to/hbv-model     # or put that checkout alongside
@@ -63,9 +69,9 @@ CC BY 4.0. See `LICENSE` and `derived_data/README.md`.
 
 ## Pipeline
 
-Run in order. Each analysis script takes explicit input and output paths
-(`--join`, `--signal`, `--strength-memory`, `--out`, ...) and has no defaults, so pass
-what you want; `--help` lists them. The two verification scripts take a single
+Run in order. Each analysis script takes its input and output paths explicitly
+(`--join`, `--signal`, `--strength-memory`, `--out`, and so on); `--help` lists
+them. The two Supporting Information verification scripts take a single
 `--derived <dir>`, defaulting to `derived_data`.
 
 **Calibration**
@@ -76,7 +82,7 @@ what you want; `--help` lists them. The two verification scripts take a single
 | `caravan_io.py` | Loader for the Caravan per-basin netCDF schema |
 | `pet_penman_monteith.py` | FAO-56 Penman-Monteith PET, computed uniformly for every country |
 | `calibrate_catchment.py`, `run_calibration_batch.py` | Per-catchment SCE-UA calibration of HBV against observed discharge |
-| `aggregate_calibration.py` | Collect the per-basin calibration JSONs into `calibrated_parameters_ALL.csv` |
+| `aggregate_calibration.py` | Collect the per-basin calibration JSONs into `calibrated_parameters_ALL.csv` (a working intermediate; only the screened table below is carried) |
 | `screen_analysis_sample.py` | Adds attributes, the glacier screen and the LamaH/GRDC de-duplication as reversible flags -> `calibrated_parameters_ALL_refined.csv` |
 | `generate_states.py` | Drive each calibrated model with its full daily forcing; save every internal store |
 
@@ -90,7 +96,7 @@ what you want; `--help` lists them. The two verification scripts take a single
 | `response_strength_and_memory.py` | `response_strength_memory_DJF.parquet` | Store memory and gains, Section 4.2, Figure 2 |
 | `response_timing.py` | `response_timing_DJF.parquet` | Timing, Section 4.2.3, Figure 3 |
 | `response_properties_observed.py` | `response_observed_DJF.parquet` | All three properties on observed flow, Section 4.3, Figure 4 |
-| `interannual_persistence.py` | `interannual_persistence_DJF.parquet` | The interannual-persistence property, tested and not carried forward |
+| `interannual_persistence.py` | `interannual_persistence_DJF.parquet` (not carried, see [`derived_data/README.md`](derived_data/README.md)) | The interannual-persistence property, tested and not carried forward |
 
 **Synthesis**
 
@@ -146,12 +152,15 @@ python physiographic_synthesis.py \
     --attrs            derived_data/attributes.parquet \
     --refined          derived_data/calibrated_parameters_ALL_refined.csv \
     --nesting          derived_data/nesting_flags.csv \
-    --outdir    out --nboot 1999 --tag full
+    --outdir           out --nboot 1999 --tag full
 ```
 
-Add `--independent-only --tag independent` for the spatially independent
-subset. `--nboot 1999` is the published setting and takes a while; a smaller
-value gives the same coefficients with coarser bootstrap p-values.
+That command reproduces `physiographic_{coeffs,summary,by_country}_full.csv`
+byte for byte, and so regenerates SI Tables S1 to S3 exactly. It takes about
+90 seconds. Add `--independent-only --tag independent` for the spatially
+independent subset. `--nboot 1999` is the published setting; a smaller value
+returns the same coefficients with coarser bootstrap p-values in proportionally
+less time.
 
 The three response properties themselves cannot be recomputed from
 `derived_data/` alone: `response_strength_and_memory.py`, `response_timing.py`
@@ -188,7 +197,7 @@ loudly the same way:
 
 ```
 python temperature_control.py   # SI Text S1
-python verify_text_s2.py                     # SI Text S2
+python verify_text_s2.py        # SI Text S2
 ```
 
 Supporting Information Tables S1 to S3 are rendered directly from
