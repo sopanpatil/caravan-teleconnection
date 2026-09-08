@@ -14,13 +14,14 @@ number without the 57 GB raw Caravan download or the calibration run.
   Research statement. Raw Caravan is not redistributed here; download it with
   `../download_caravan.sh`.
 - **Regenerating these**: see the pipeline table in the top-level README.
+- **Every column of every file**: [`DATA_DICTIONARY.md`](DATA_DICTIONARY.md).
 
 ## Contents
 
 | file | rows | cols | what it is |
 |---|---:|---:|---|
 | `calibrated_parameters_ALL_refined.csv` | 3201 | 29 | Calibrated HBV parameters for every catchment attempted, with calibration and validation KGE, HydroATLAS glacier cover, LamaH/GRDC duplicate flags, and `include_in_analysis`. The 2,135-catchment analysis set is the subset with `include_in_analysis` true. |
-| `attributes.parquet` | 7195 | 13 | Caravan climate signatures and HydroATLAS physiography, for the domain before screening |
+| `attributes.parquet` | 7195 | 13 | Caravan climate signatures and HydroATLAS physiography, for the domain before screening. Rebuilt from the raw attribute CSVs by `../build_attributes.py` |
 | `seasonal_join_DJF.parquet` | 135186 | 27 | DJF seasonal means and anomalies per catchment-winter, joined to the circulation indices. Restricted to the 2,135 analysis catchments. The input to every script below, and the one file that lets the analysis be redone without the raw Caravan download. |
 | `precipitation_signal_DJF.parquet` | 2135 | 33 | Per-catchment precipitation sensitivity to the four modes: partial coefficients, standard errors, p and FDR q values, adjusted R2 |
 | `response_strength_memory_DJF.parquet` | 2135 | 27 | Memory (e-folding tau, lag-1 ac1, censoring flags) and standardised gains, per store, on simulated flow |

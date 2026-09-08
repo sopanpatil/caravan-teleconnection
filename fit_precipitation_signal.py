@@ -2,7 +2,7 @@
 """
 fit_precipitation_signal.py
 
-Stage-1 of the two-stage decomposition: local meteorological
+First half of the forcing/response decomposition: local meteorological
 sensitivity. For each catchment, jointly regress the DJF precipitation anomaly on
 the standardised CPC winter teleconnection indices
 

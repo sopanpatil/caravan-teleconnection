@@ -2,7 +2,7 @@
 """
 response_strength_and_memory.py
 
-Stage-2 of the two-stage decomposition: how each catchment
+Second half of the forcing/response decomposition: how each catchment
 *transforms* the teleconnection signal. Two per-catchment quantities per store
 (SM soil moisture, SP snowpack, UZ upper zone, LZ lower zone) and for flow (Qsim):
 

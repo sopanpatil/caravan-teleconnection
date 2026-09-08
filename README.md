@@ -69,6 +69,10 @@ than as an input, and no script reads it: it records the daily-record coverage
 of all 308 Danish gauges that were calibrated, which is the audit behind the
 Danish sample, 263 of which pass the screen into the analysis set.
 
+Every column of every tracked product is defined in
+[`derived_data/DATA_DICTIONARY.md`](derived_data/DATA_DICTIONARY.md), including
+units, what a missing value means, and which flag selects the analysis set.
+
 Note the licence split: the code is MIT, the data in `derived_data/` are
 CC BY 4.0. See `LICENSE` and `derived_data/README.md`.
 
@@ -85,6 +89,7 @@ them. The two Supporting Information verification scripts take a single
 |---|---|
 | `download_caravan.sh` | Fetch Caravan base (which carries the CAMELS-GB and LamaH-CE sources) plus the CAMELS-DK and GRDC-Caravan extensions |
 | `caravan_io.py` | Loader for the Caravan per-basin netCDF schema |
+| `build_attributes.py` | Assemble `attributes.parquet` from the collections' own attribute CSVs |
 | `pet_penman_monteith.py` | FAO-56 Penman-Monteith PET, computed uniformly for every country |
 | `calibrate_catchment.py`, `run_calibration_batch.py` | Per-catchment SCE-UA calibration of HBV against observed discharge |
 | `aggregate_calibration.py` | Collect the per-basin calibration JSONs into `calibrated_parameters_ALL.csv` (a working intermediate; only the screened table below is carried) |
@@ -182,7 +187,7 @@ without `hbv-model`:
 ```
 for f in fit_precipitation_signal response_strength_and_memory response_timing \
          response_properties_observed physiographic_synthesis nesting_screen \
-         interannual_persistence temperature_control \
+         interannual_persistence temperature_control build_attributes \
          build_seasonal_table generate_states screen_analysis_sample; do
     python $f.py --selftest || echo "FAILED: $f"
 done
