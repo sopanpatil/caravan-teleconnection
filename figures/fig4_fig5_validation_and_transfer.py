@@ -245,7 +245,7 @@ def fig_transfer(summary, coeffs, by_country, path):
 def main():
     ap = argparse.ArgumentParser()
     for f in ["strength-memory", "timing", "observed", "summary", "coeffs", "by-country"]:
-        ap.add_argument(f"--{f}")
+        ap.add_argument(f"--{f}", required=True)
     ap.add_argument("--out-validation",
                     default="figures/fig4_observed_validation.png")
     ap.add_argument("--out-transfer",
