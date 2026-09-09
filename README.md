@@ -10,15 +10,15 @@ dataset and forced consistently from ERA5-Land. It regresses winter
 precipitation on four North Atlantic circulation modes to isolate the forcing,
 drives a per-catchment calibrated HBV model to measure three response
 properties (within-season transfer strength, storage memory, snowmelt timing),
-recomputes all three directly on observed discharge, and then asks how far the
-resulting physiographic relationships travel by withholding whole countries.
+recomputes all three directly on observed discharge, and then tests how far the
+resulting physiographic relationships transfer by withholding whole countries.
 
 ## Requirements
 
 Python 3.12 (the published results used 3.12.11; every pinned version is
-recorded at the top of `requirements.txt`). Then `pip install -r
-requirements.txt`, plus the HBV model itself, which lives in a separate
-repository and is not on PyPI:
+recorded at the top of `requirements.txt`). Install the dependencies with
+`pip install -r requirements.txt`, then the HBV model itself, which lives in a
+separate repository and is not on PyPI:
 
 ```
 git clone https://github.com/sopanpatil/hbv-model
@@ -35,22 +35,18 @@ every map falls back to a plain lon/lat frame without it.
 
 ## Paths
 
-No input path is baked in. Every analysis script takes its inputs and outputs
+No input path is hard-coded. Every analysis script takes its inputs and outputs
 as explicit arguments, so a run states exactly which files it consumed. The
-defaults that do exist are there to make a fresh clone work unchanged: the
-figure scripts default `--out` to the published figure path, and
-`verify_manuscript.py`, `temperature_control.py` and `verify_text_s2.py`
-default `--derived` to `derived_data`. Two environment variables cover the
-rest:
+defaults that do exist let a fresh clone run unchanged: the figure scripts
+default `--out` to the published figure path, and `verify_manuscript.py`,
+`temperature_control.py` and `verify_text_s2.py` default `--derived` to
+`derived_data`. Two environment variables cover the rest:
 
 ```
 export HBV_MODEL_REPO=/path/to/hbv-model     # or put that checkout alongside
                                              # this one, which is the fallback
 export CARAVAN_DEST=/path/for/raw/caravan    # default ./caravan_raw
 ```
-
-The two Supporting Information verification scripts default to `--derived
-derived_data`, so they run correctly in a fresh clone with no arguments.
 
 ## Data
 
@@ -62,12 +58,12 @@ Three tiers, of which the smallest and most important is carried here:
 | Daily HBV states (~7 GB) | Regenerate with `generate_states.py`. Working intermediate, not carried. |
 | **Derived per-catchment products (~29 MB)** | **Tracked, in [`derived_data/`](derived_data/).** Every number in the Results and in SI Tables S1-S3 comes from these, so a clone reproduces the paper without the 57 GB download or the calibration run. |
 
-One small input is also tracked, because it is cheap and pins the analysis:
+One small input is also tracked, because it is small and pins the analysis:
 `teleconnection_seasonal.csv`, the CPC indices as fetched and seasonally
 averaged. `dk_record_coverage.csv` sits alongside it as provenance rather
 than as an input, and no script reads it: it records the daily-record coverage
-of all 308 Danish gauges that were calibrated, which is the audit behind the
-Danish sample, 263 of which pass the screen into the analysis set.
+of all 308 Danish gauges that were calibrated, of which 263 pass the screen
+into the analysis set.
 
 Every column of every tracked product is defined in
 [`derived_data/DATA_DICTIONARY.md`](derived_data/DATA_DICTIONARY.md), including
@@ -80,8 +76,8 @@ CC BY 4.0. See `LICENSE` and `derived_data/README.md`.
 
 Run in order. Each analysis script takes its input and output paths explicitly
 (`--join`, `--signal`, `--strength-memory`, `--out`, and so on); `--help` lists
-them. The two Supporting Information verification scripts take a single
-`--derived <dir>`, defaulting to `derived_data`.
+them. The two Supporting Information verification scripts instead take a
+single input directory, `--derived <dir>`, defaulting to `derived_data`.
 
 **Calibration**
 
@@ -93,7 +89,7 @@ them. The two Supporting Information verification scripts take a single
 | `pet_penman_monteith.py` | FAO-56 Penman-Monteith PET, computed uniformly for every country |
 | `calibrate_catchment.py`, `run_calibration_batch.py` | Per-catchment SCE-UA calibration of HBV against observed discharge |
 | `aggregate_calibration.py` | Collect the per-basin calibration JSONs into `calibrated_parameters_ALL.csv` (a working intermediate; only the screened table below is carried) |
-| `screen_analysis_sample.py` | Adds attributes, the glacier screen and the LamaH/GRDC de-duplication as reversible flags -> `calibrated_parameters_ALL_refined.csv` |
+| `screen_analysis_sample.py` | Add attributes, the glacier screen and the LamaH/GRDC de-duplication to `calibrated_parameters_ALL_refined.csv` as reversible flags |
 | `generate_states.py` | Drive each calibrated model with its full daily forcing; save every internal store |
 
 **Forcing and response properties**
@@ -135,7 +131,7 @@ with no `--out` each writes its published path.
 The tracked products are enough to rebuild the whole synthesis, with no raw
 download and no calibration run.
 
-One trap worth naming: `--attrs` means a different file in two scripts. In
+One ambiguity to note: `--attrs` names a different file in two scripts. In
 `fit_precipitation_signal.py` it is the calibration table, which carries the gauge
 coordinates; in `physiographic_synthesis.py` it is `attributes.parquet`, the
 climate and physiography predictors.
@@ -175,8 +171,8 @@ less time.
 The three response properties themselves cannot be recomputed from
 `derived_data/` alone: `response_strength_and_memory.py`, `response_timing.py`
 and `response_properties_observed.py` read the daily HBV state series, about 7 GB,
-which is not carried here because it regenerates from `generate_states.py`.
-Their outputs are archived instead. Figure 3 is in the same position.
+which is not carried here because `generate_states.py` regenerates it. Their
+outputs are archived instead. Figure 3 depends on the same series.
 
 ## Verifying the reported numbers
 
@@ -203,8 +199,8 @@ python verify_manuscript.py                  # 109 claims + 17 parameters
 python verify_manuscript.py --list-unchecked # what it does not cover, and why
 ```
 
-Two further scripts cover the Supporting Information text sections, and fail
-loudly the same way:
+Two further scripts cover the Supporting Information text sections, and exit
+non-zero the same way:
 
 ```
 python temperature_control.py   # SI Text S1

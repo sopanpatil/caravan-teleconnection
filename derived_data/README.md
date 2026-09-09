@@ -22,7 +22,7 @@ number without the 57 GB raw Caravan download or the calibration run.
 |---|---:|---:|---|
 | `calibrated_parameters_ALL_refined.csv` | 3201 | 29 | Calibrated HBV parameters for every catchment attempted, with calibration and validation KGE, HydroATLAS glacier cover, LamaH/GRDC duplicate flags, and `include_in_analysis`. The 2,135-catchment analysis set is the subset with `include_in_analysis` true. |
 | `attributes.parquet` | 7195 | 13 | Caravan climate signatures and HydroATLAS physiography, for the domain before screening. Rebuilt from the raw attribute CSVs by `../build_attributes.py` |
-| `seasonal_join_DJF.parquet` | 135186 | 27 | DJF seasonal means and anomalies per catchment-winter, joined to the circulation indices. Restricted to the 2,135 analysis catchments. The input to every script below, and the one file that lets the analysis be redone without the raw Caravan download. |
+| `seasonal_join_DJF.parquet` | 135186 | 27 | DJF seasonal means and anomalies per catchment-winter, joined to the circulation indices. Restricted to the 2,135 analysis catchments. The input to every script below, and the one file that removes the need for the raw Caravan download. |
 | `precipitation_signal_DJF.parquet` | 2135 | 33 | Per-catchment precipitation sensitivity to the four modes: partial coefficients, standard errors, p and FDR q values, adjusted R2 |
 | `response_strength_memory_DJF.parquet` | 2135 | 27 | Memory (e-folding tau, lag-1 ac1, censoring flags) and standardised gains, per store, on simulated flow |
 | `response_timing_DJF.parquet` | 2135 | 14 | Timing on simulated flow: response lag, late-response fraction, winter correlation, retention |
@@ -49,8 +49,8 @@ Figures 1, 2, 4 and 5.
 Not reproducible from these files alone: the three response properties
 themselves (`response_strength_and_memory.py`, `response_timing.py`,
 `response_properties_observed.py`, and Figure 3). Those read the daily HBV state
-series, about 7 GB, which is not archived because it regenerates from
-`generate_states.py` given the calibrated parameters here and the raw Caravan
+series, about 7 GB, which is not archived because `generate_states.py`
+regenerates it from the calibrated parameters here and the raw Caravan
 forcing. Their outputs are archived instead, as the `response_*` files above.
 
 ## Notes
@@ -82,9 +82,9 @@ forcing. Their outputs are archived instead, as the `response_*` files above.
   67-winter record spans roughly one AMO cycle, so it cannot be tested here.
 - Four superseded synthesis outputs (`stage3_coeffs.csv`,
   `stage3_cv_summary.csv`, `stage3_cv_by_country.csv`,
-  `stage3c_timing_coeffs.csv`) are also absent. They carry pre-re-analysis
-  figures: normal-reference p-values that 16 country clusters cannot support,
-  and transfer skill scored only against the global mean. The
+  `stage3c_timing_coeffs.csv`) are also absent. They carry numbers that predate
+  the re-analysis: normal-reference p-values that 16 country clusters cannot
+  support, and transfer skill scored only against the global mean. The
   `physiographic_*` files supersede them.
 - Daily HBV state series (about 7 GB) are not carried here; regenerate them
   with `../generate_states.py`.
