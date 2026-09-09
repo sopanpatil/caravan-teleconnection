@@ -106,7 +106,7 @@ them. The two Supporting Information verification scripts take a single
 | `response_strength_and_memory.py` | `response_strength_memory_DJF.parquet` | Store memory and gains, Section 4.2, Figure 2 |
 | `response_timing.py` | `response_timing_DJF.parquet` | Timing, Section 4.2.3, Figure 3 |
 | `response_properties_observed.py` | `response_observed_DJF.parquet` | All three properties on observed flow, Section 4.3, Figure 4 |
-| `interannual_persistence.py` | `interannual_persistence_DJF.parquet` (not carried, see [`derived_data/README.md`](derived_data/README.md)) | The interannual-persistence property, tested and not carried forward |
+| `interannual_persistence.py` | `interannual_persistence_DJF.parquet` (not carried, see [`derived_data/README.md`](derived_data/README.md)) | Nothing in the paper. A fourth candidate property, the persistence of the signal across successive winters, evaluated and not carried forward. Kept here for provenance |
 
 **Synthesis**
 

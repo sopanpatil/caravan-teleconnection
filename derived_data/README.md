@@ -74,9 +74,9 @@ forcing. Their outputs are archived instead, as the `response_*` files above.
   pipeline wrote `Lichtenstein`; corrected here, with no effect on any value.
 - Two intermediates from the working directory are deliberately absent.
   `interannual_persistence_DJF.parquet` was not regenerated when the KGE screen
-  was tightened and still held the earlier, looser 2,423-catchment sample; the
-  interannual persistence claim it supports was separately re-verified on the
-  final 2,135.
+  was tightened and still held the earlier, looser 2,423-catchment sample. No
+  claim rests on it: the fourth candidate property it measures was evaluated
+  and not carried forward, and the paper reports nothing from it.
   Products of an Atlantic Multidecadal Oscillation sub-analysis are also absent:
   the AMO is not one of the four circulation modes this paper analyses, and a
   67-winter record spans roughly one AMO cycle, so it cannot be tested here.
