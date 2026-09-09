@@ -555,7 +555,7 @@ def group_b() -> list[tuple[str, str, object, object]]:
          3000, "response_properties_observed.py", "MIN_DAYS"),
         ("3.3.2", "at least 365 valid day-pairs before a lag is admitted",
          365, "response_properties_observed.py", "MIN_PAIRS"),
-        ("3.3.2", "at least 20 valid days before a month contributes",
+        ("3.3.3", "at least 20 valid days before a month contributes",
          20, "response_properties_observed.py", "MIN_MONTH_DAYS"),
         ("3.3.3", "lag profile computed where peak |r| > 0.2",
          0.2, "response_timing.py", "SIG_MIN"),
