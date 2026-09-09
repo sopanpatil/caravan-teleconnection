@@ -108,6 +108,41 @@ def _(d): return d["nest"].loc[d["nest"].independent.astype(bool), "area"].sum()
 @claim("4.1", "median 67 winters per catchment", 67, 0)
 def _(d): return d["s1"].n_winters.median()
 
+# The record spans of Section 2.2. The Danish forcing starts late and the other
+# three sources reach back to the ERA5-Land back-extension, so the sentence
+# quotes a Danish span and a range for the rest; both are checked here.
+_BACK = ["camelsgb", "lamah", "grdc"]   # the British, Alpine and GRDC sources
+
+@claim("2.2", "Danish record opens in winter year 1987", 1987, 0)
+def _(d): return d["join"].loc[d["join"].source == "camelsdk", "winter_year"].min()
+
+@claim("2.2", "Danish record closes in 2020", 2020, 0)
+def _(d): return d["join"].loc[d["join"].source == "camelsdk", "winter_year"].max()
+
+@claim("2.2", "34 winters for Denmark", 34, 0)
+def _(d): return d["s1"].loc[d["s1"].source == "camelsdk", "n_winters"].median()
+
+@claim("2.2", "earliest winter of the other three sources is 1955/56", 1956, 0)
+def _(d): return d["join"].loc[d["join"].source.isin(_BACK), "winter_year"].min()
+
+@claim("2.2", "latest of their three start years is 1956/57", 1957, 0)
+def _(d):
+    j = d["join"][d["join"].source.isin(_BACK)]
+    return j.groupby("source").winter_year.min().max()
+
+@claim("2.2", "those three run to 2023", 2023, 0)
+def _(d): return d["join"].loc[d["join"].source.isin(_BACK), "winter_year"].max()
+
+@claim("2.2", "67 to 68 winters for those three: the shortest", 67, 0)
+def _(d):
+    j = d["join"][d["join"].source.isin(_BACK)]
+    return j.groupby(["source", "gauge_id"]).size().groupby("source").median().min()
+
+@claim("2.2", "67 to 68 winters for those three: the longest", 68, 0)
+def _(d):
+    j = d["join"][d["join"].source.isin(_BACK)]
+    return j.groupby(["source", "gauge_id"]).size().groupby("source").median().max()
+
 @claim("4.1", "modes explain a median 33 % of DJF precipitation variance", 33.0, 0.5)
 def _(d): return 100 * d["s1"].adj_r2.median()
 
@@ -577,9 +612,6 @@ UNCHECKED = [
     ("2.2", "Table 1 median KGE by source",
      "derivable, but reported per Caravan source rather than per country; "
      "check with a groupby on calibrated_parameters_ALL_refined.csv"),
-    ("2.2", "record periods 1987-2020 and 1955/56-2023",
-     "the winter-year range is a property of the raw Caravan forcing, not of "
-     "the archived seasonal products"),
     ("2.2", "observed discharge median 37 years, minimum 10",
      "needs the daily observed series, which the archive does not carry"),
     ("3.3.2", "observed records median 63 % coverage",
@@ -616,6 +648,9 @@ def load(derived: str) -> dict:
     d["cal"] = pd.read_csv(p("calibrated_parameters_ALL_refined.csv"))
     d["inc"] = d["cal"][d["cal"].include_in_analysis.astype(bool)]
     d["s1"] = pd.read_parquet(p("precipitation_signal_DJF.parquet"))
+    # Only the three columns the record-span claims need: the full join is 25 MB.
+    d["join"] = pd.read_parquet(p("seasonal_join_DJF.parquet"),
+                                columns=["winter_year", "gauge_id", "source"])
     d["s2"] = pd.read_parquet(p("response_strength_memory_DJF.parquet"))
     d["s2c"] = pd.read_parquet(p("response_timing_DJF.parquet"))
     d["obs"] = pd.read_parquet(p("response_observed_DJF.parquet"))
