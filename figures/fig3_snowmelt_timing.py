@@ -62,6 +62,9 @@ def _pdf_width_in(path):
     return float(m.group(1).split()[2]) / 72 if m else float("nan")
 
 
+# Fraction of the panel-(a) data range opened above the curves for the legend
+LEGEND_HEADROOM = 0.30
+
 EXTENT = [-25, 32, 34, 72]
 BETA = {"NAO_DJF": "beta_NAO", "EA_DJF": "beta_EA",
         "EAWR_DJF": "beta_EAWR", "SCA_DJF": "beta_SCA"}
@@ -143,13 +146,23 @@ def make(s2c, attrs, betas, indices, states_dir, spinup, out):
         axp.plot(LAGS, r, "-o", color=col, lw=1.8, ms=4, label=lab)
     axp.axhline(0, color="#888", lw=0.7)
     axp.axvspan(-0.5, 2.5, color="#dce7ef", alpha=0.6, zorder=0)   # DJF window
-    axp.text(1, axp.get_ylim()[1] * 0.92 if axp.get_ylim()[1] > 0 else 0.6, "winter",
-             ha="center", color="#345")
+    # Read the autoscaled limits before any headroom is added: the "winter" tag
+    # is placed against the curves, not against the enlarged axis.
+    lo, hi = axp.get_ylim()
+    axp.text(1, hi * 0.92 if hi > 0 else 0.6, "winter", ha="center", color="#345")
     axp.set_xticks(LAGS); axp.set_xticklabels(MLAB)
     axp.set_ylabel("corr(flow anomaly, winter forcing)")
     axp.set_title("(a) Monthly response profiles $r(L)$ for three endpoint catchments",
                   loc="left")
-    axp.legend(loc="upper right", framealpha=0.9)
+    # At the full-page width an upper-right box sat over the Norway curve's
+    # summer peak. Open a band above the data and lay the three entries out in
+    # one frameless row inside it, so the legend cannot cover a data point.
+    axp.set_ylim(lo, hi + LEGEND_HEADROOM * (hi - lo))
+    # Spacing measured, not guessed: at the default handle/column spacing the
+    # three entries are 0.165 in wider than the axes and the last one runs off
+    # the right edge. These values leave about 0.2 in of slack.
+    axp.legend(loc="upper center", ncol=3, frameon=False, borderaxespad=0.15,
+               columnspacing=0.8, handlelength=1.2, handletextpad=0.35)
     axp.grid(axis="y", ls=":", alpha=0.4)
 
     # (b) map of late-response fraction ---------------------------------------
