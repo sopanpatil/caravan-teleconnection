@@ -175,6 +175,31 @@ and `response_properties_observed.py` read the daily HBV state series, about 7 G
 which is not carried here because `generate_states.py` regenerates it. Their
 outputs are archived instead. Figure 3 depends on the same series.
 
+Rebuilding that series needs the raw download but not the calibration run,
+since the calibrated parameters are tracked:
+
+```
+bash download_caravan.sh caravan_raw
+
+python generate_states.py \
+    --refined derived_data/calibrated_parameters_ALL_refined.csv \
+    --raw     caravan_raw \
+    --out     caravan_states
+```
+
+That writes one parquet per catchment plus `caravan_states/states_manifest.csv`,
+which is the file every `--manifest` argument expects. Figure 3 then draws with:
+
+```
+python figures/fig3_snowmelt_timing.py \
+    --timing     derived_data/response_timing_DJF.parquet \
+    --attrs      derived_data/attributes.parquet \
+    --signal     derived_data/precipitation_signal_DJF.parquet \
+    --indices    teleconnection_seasonal.csv \
+    --states-dir caravan_states \
+    --manifest   caravan_states/states_manifest.csv
+```
+
 ## Verifying the reported numbers
 
 Most analysis scripts carry a `--selftest` that runs on synthetic data with a
