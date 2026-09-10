@@ -21,6 +21,10 @@ ZENODO_PACKAGING_NOTES.md
 *.log
 !derived_data/*.parquet
 
-# Figures are tracked (they are the published figures), but scratch renders
-# from an interactive session are not.
+# Rendered figures are not tracked. The figures/fig*.py scripts write them,
+# and the published copies live with the paper in the manuscript repository.
+# Figure 3 is the one that needs more than derived_data/: its panel (a) reads
+# the daily state series, which generate_states.py regenerates.
+figures/*.png
+figures/*.pdf
 figures/scratch/

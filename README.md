@@ -115,9 +115,10 @@ single input directory, `--derived <dir>`, defaulting to `derived_data`.
 
 **Figures**
 
-Each figure script lives in `figures/` and is named for the figure it writes,
-alongside that figure's `.png` and `.pdf`. Run them from the repository root;
-with no `--out` each writes its published path.
+Each figure script lives in `figures/` and is named for the figure it writes.
+The rendered `.png` and `.pdf` are not tracked; each script writes them into
+`figures/`, and the published copies live with the paper. Run them from the
+repository root; with no `--out` each writes its published path.
 
 | Script | Figure |
 |---|---|
