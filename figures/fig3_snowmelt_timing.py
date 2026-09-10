@@ -32,6 +32,36 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy import stats
 
+# AGU asks for >=8 pt text at the printed size and will not take Type 3 fonts.
+# Both are settled here: the figure is drawn at the full-page width (6.5 in /
+# 39 pc) with a 9 pt base, and a tight bounding box can only ever crop the
+# canvas smaller, so the printed text is 9 pt or a shade larger, never less.
+FIG_W = 6.5
+matplotlib.rcParams.update({
+    "pdf.fonttype": 42, "ps.fonttype": 42,          # TrueType, not Type 3
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Helvetica", "Nimbus Sans", "Arial", "Liberation Sans",
+                        "DejaVu Sans"],
+    "font.size": 9, "axes.titlesize": 9, "axes.labelsize": 9,
+    "xtick.labelsize": 9, "ytick.labelsize": 9, "legend.fontsize": 9,
+    # mathtext defaults to DejaVu whatever font.family says; "custom" keeps the
+    # tau and the subscripts in the text face, which carries the Greek
+    "mathtext.fontset": "custom", "mathtext.default": "it",
+    "mathtext.rm": "sans", "mathtext.it": "sans:italic", "mathtext.bf": "sans:bold",
+    "mathtext.cal": "sans", "mathtext.tt": "monospace", "mathtext.sf": "sans",
+    "axes.linewidth": 0.6, "grid.linewidth": 0.4,
+    "xtick.major.width": 0.6, "ytick.major.width": 0.6,
+})
+
+def _pdf_width_in(path):
+    """Width of the saved PDF, in inches. A tight bounding box crops the canvas,
+    so this reports what actually landed rather than what figsize asked for."""
+    import re
+    with open(path, "rb") as fh:
+        m = re.search(rb"/MediaBox\s*\[([^\]]*)\]", fh.read())
+    return float(m.group(1).split()[2]) / 72 if m else float("nan")
+
+
 EXTENT = [-25, 32, 34, 72]
 BETA = {"NAO_DJF": "beta_NAO", "EA_DJF": "beta_EA",
         "EAWR_DJF": "beta_EAWR", "SCA_DJF": "beta_SCA"}
@@ -95,9 +125,9 @@ def make(s2c, attrs, betas, indices, states_dir, spinup, out):
     d = s2c.merge(attrs, on="gauge_id", how="left")
     ok = d[d.sig > 0.2].copy()
 
-    fig = plt.figure(figsize=(10.0, 8.4))
+    fig = plt.figure(figsize=(FIG_W, FIG_W * 8.4 / 10.0))
     gs = fig.add_gridspec(2, 2, height_ratios=[0.85, 1.4], width_ratios=[1.25, 1.0],
-                          hspace=0.26, wspace=0.22)
+                          hspace=0.26, wspace=0.36)
 
     # (a) response profiles for endpoints -------------------------------------
     axp = fig.add_subplot(gs[0, :])
@@ -114,12 +144,12 @@ def make(s2c, attrs, betas, indices, states_dir, spinup, out):
     axp.axhline(0, color="#888", lw=0.7)
     axp.axvspan(-0.5, 2.5, color="#dce7ef", alpha=0.6, zorder=0)   # DJF window
     axp.text(1, axp.get_ylim()[1] * 0.92 if axp.get_ylim()[1] > 0 else 0.6, "winter",
-             ha="center", fontsize=8, color="#345")
-    axp.set_xticks(LAGS); axp.set_xticklabels(MLAB, fontsize=8)
-    axp.set_ylabel("corr(flow anomaly, winter forcing)", fontsize=9.5)
+             ha="center", color="#345")
+    axp.set_xticks(LAGS); axp.set_xticklabels(MLAB)
+    axp.set_ylabel("corr(flow anomaly, winter forcing)")
     axp.set_title("(a) Monthly response profiles $r(L)$ for three endpoint catchments",
-                  fontsize=9.5, loc="left")
-    axp.legend(fontsize=8.5, loc="upper right", framealpha=0.9)
+                  loc="left")
+    axp.legend(loc="upper right", framealpha=0.9)
     axp.grid(axis="y", ls=":", alpha=0.4)
 
     # (b) map of late-response fraction ---------------------------------------
@@ -130,9 +160,8 @@ def make(s2c, attrs, betas, indices, states_dir, spinup, out):
                      c=ok.late_frac.iloc[order], cmap="YlGnBu", vmin=0, vmax=1.0,
                      s=13, alpha=0.9, edgecolors="none", zorder=2, **tf)
     cb = plt.colorbar(sc, ax=axm, shrink=0.62, pad=0.02)
-    cb.set_label("late fraction", fontsize=9)
-    axm.set_title(f"(b) Phase-shift index (share of response in spring+)\n({len(ok):,} catchments)",
-                  fontsize=10)
+    cb.set_label("late fraction")
+    axm.set_title(f"(b) Phase-shift index (share of response in spring+)\n({len(ok):,} catchments)")
 
     # (c) late-response fraction vs snow --------------------------------------
     axs = fig.add_subplot(gs[1, 1])
@@ -153,15 +182,21 @@ def make(s2c, attrs, betas, indices, states_dir, spinup, out):
                 ctr.append(np.nanmedian(x[sel])); med.append(np.nanmedian(y[sel]))
     axs.plot(ctr, med, "-o", color="#c1666b", lw=2, ms=5, label="binned median (equal count)")
     rho = stats.spearmanr(x, y, nan_policy="omit").statistic
-    axs.set_xlabel("snow fraction", fontsize=9.5)
-    axs.set_ylabel("late-response fraction", fontsize=9.5)
-    axs.set_title(f"(c) Late-response fraction against snow fraction\n(Spearman $\\rho={rho:+.2f}$)", fontsize=10)
-    axs.legend(fontsize=8.5, loc="lower right"); axs.grid(ls=":", alpha=0.4)
+    axs.set_xlabel("snow fraction")
+    axs.set_ylabel("late-response fraction")
+    axs.set_title(f"(c) Late-response fraction against\nsnow fraction (Spearman $\\rho={rho:+.2f}$)")
+    axs.legend(loc="lower right"); axs.grid(ls=":", alpha=0.4)
 
-    fig.savefig(out, dpi=300, bbox_inches="tight")
-    fig.savefig(os.path.splitext(out)[0] + ".pdf", bbox_inches="tight")
+    # Explicit margins and no tight bbox: bbox_inches="tight" measures a cartopy
+    # GeoAxes as empty and crops the map away, leaving only its colourbar.
+    # Fixing the margins here also means the saved width is exactly FIG_W.
+    fig.subplots_adjust(left=0.088, right=0.978, top=0.955, bottom=0.085)
+    fig.savefig(out, dpi=300)
+    pdf = os.path.splitext(out)[0] + ".pdf"
+    fig.savefig(pdf)
     plt.close(fig)
-    print(f"  wrote {out} (+.pdf)  signal={len(ok)}", flush=True)
+    print(f"  wrote {out} (+.pdf)  signal={len(ok)}"
+          f"  [{_pdf_width_in(pdf):.2f} in wide]", flush=True)
 
 
 def main():

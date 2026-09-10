@@ -29,6 +29,36 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+# AGU asks for >=8 pt text at the printed size and will not take Type 3 fonts.
+# Both are settled here: the figure is drawn at the full-page width (6.5 in /
+# 39 pc) with a 9 pt base, and a tight bounding box can only ever crop the
+# canvas smaller, so the printed text is 9 pt or a shade larger, never less.
+FIG_W = 6.5
+matplotlib.rcParams.update({
+    "pdf.fonttype": 42, "ps.fonttype": 42,          # TrueType, not Type 3
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Helvetica", "Nimbus Sans", "Arial", "Liberation Sans",
+                        "DejaVu Sans"],
+    "font.size": 9, "axes.titlesize": 9, "axes.labelsize": 9,
+    "xtick.labelsize": 9, "ytick.labelsize": 9, "legend.fontsize": 9,
+    # mathtext defaults to DejaVu whatever font.family says; "custom" keeps the
+    # tau and the subscripts in the text face, which carries the Greek
+    "mathtext.fontset": "custom", "mathtext.default": "it",
+    "mathtext.rm": "sans", "mathtext.it": "sans:italic", "mathtext.bf": "sans:bold",
+    "mathtext.cal": "sans", "mathtext.tt": "monospace", "mathtext.sf": "sans",
+    "axes.linewidth": 0.6, "grid.linewidth": 0.4,
+    "xtick.major.width": 0.6, "ytick.major.width": 0.6,
+})
+
+def _pdf_width_in(path):
+    """Width of the saved PDF, in inches. A tight bounding box crops the canvas,
+    so this reports what actually landed rather than what figsize asked for."""
+    import re
+    with open(path, "rb") as fh:
+        m = re.search(rb"/MediaBox\s*\[([^\]]*)\]", fh.read())
+    return float(m.group(1).split()[2]) / 72 if m else float("nan")
+
+
 EXTENT = [-25, 32, 36, 72]   # lon0, lon1, lat0, lat1 (Europe; data span -23.1..31.0, 37.3..70.9)
 INDICES = ["NAO", "EA", "EAWR", "SCA"]
 
@@ -57,13 +87,13 @@ def plot_one(res: pd.DataFrame, idx: str, out: str):
     try:
         import cartopy.crs as ccrs
         proj = ccrs.PlateCarree()
-        fig = plt.figure(figsize=(9.0, 6.4))
+        fig = plt.figure(figsize=(FIG_W, 3.58))
         ax = plt.axes(projection=proj)
         ax.set_extent(EXTENT, crs=proj)
         tf = {"transform": proj}
         on_map = True
     except Exception:
-        fig, ax = plt.subplots(figsize=(9.0, 6.4))
+        fig, ax = plt.subplots(figsize=(FIG_W, 3.58))
         ax.set_xlim(EXTENT[:2]); ax.set_ylim(EXTENT[2:]); ax.set_aspect(1.4)
         tf = {}
     _basemap(ax)
@@ -72,7 +102,7 @@ def plot_one(res: pd.DataFrame, idx: str, out: str):
             gl = ax.gridlines(draw_labels=True, lw=0.3, color="#aaa",
                               alpha=0.6, linestyle=":")
             gl.top_labels = gl.right_labels = False
-            gl.xlabel_style = gl.ylabel_style = {"size": 7, "color": "#555"}
+            gl.xlabel_style = gl.ylabel_style = {"size": 9, "color": "#555"}
         except Exception as e:  # noqa: BLE001 - gridline labels need a recent cartopy
             print(f"  (gridlines unavailable: {type(e).__name__})", flush=True)
 
@@ -84,13 +114,21 @@ def plot_one(res: pd.DataFrame, idx: str, out: str):
                     edgecolors="k", linewidths=0.3, zorder=3, **tf)
 
     cb = plt.colorbar(sc, ax=ax, shrink=0.72, aspect=34, pad=0.02, extend="both")
-    cb.set_label(f"$\\beta_{{{idx}}}$  (mm day$^{{-1}}$ per unit index)", fontsize=10)
+    cb.set_label(f"$\\beta_{{{idx}}}$  (mm day$^{{-1}}$ per unit index)")
     n_sig = int(sig.sum())
-    fig.tight_layout()
-    fig.savefig(out, dpi=300, bbox_inches="tight")
-    fig.savefig(os.path.splitext(out)[0] + ".pdf", bbox_inches="tight")
+    # Explicit margins, and neither tight_layout nor a tight bbox. On an
+    # aspect-locked GeoAxes, tight_layout resizes the map after the gridliner has
+    # built its labels and cartopy >=0.25 then throws a GEOS error off the
+    # degenerate boundary rings, while bbox_inches="tight" measures the GeoAxes
+    # as empty and crops the map away, leaving only the colourbar. Fixing the
+    # margins here also means the saved width is exactly FIG_W.
+    fig.subplots_adjust(left=0.080, right=0.995, top=0.985, bottom=0.055)
+    fig.savefig(out, dpi=300)
+    pdf = os.path.splitext(out)[0] + ".pdf"
+    fig.savefig(pdf)
     plt.close(fig)
-    print(f"  wrote {out} (+.pdf)  vmax={vmax:.3f}  n_sig={n_sig}", flush=True)
+    print(f"  wrote {out} (+.pdf)  vmax={vmax:.3f}  n_sig={n_sig}"
+          f"  [{_pdf_width_in(pdf):.2f} in wide]", flush=True)
 
 
 def main():

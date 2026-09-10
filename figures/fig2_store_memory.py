@@ -35,6 +35,36 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm, Normalize
 
+# AGU asks for >=8 pt text at the printed size and will not take Type 3 fonts.
+# Both are settled here: the figure is drawn at the full-page width (6.5 in /
+# 39 pc) with a 9 pt base, and a tight bounding box can only ever crop the
+# canvas smaller, so the printed text is 9 pt or a shade larger, never less.
+FIG_W = 6.5
+matplotlib.rcParams.update({
+    "pdf.fonttype": 42, "ps.fonttype": 42,          # TrueType, not Type 3
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Helvetica", "Nimbus Sans", "Arial", "Liberation Sans",
+                        "DejaVu Sans"],
+    "font.size": 9, "axes.titlesize": 9, "axes.labelsize": 9,
+    "xtick.labelsize": 9, "ytick.labelsize": 9, "legend.fontsize": 9,
+    # mathtext defaults to DejaVu whatever font.family says; "custom" keeps the
+    # tau and the subscripts in the text face, which carries the Greek
+    "mathtext.fontset": "custom", "mathtext.default": "it",
+    "mathtext.rm": "sans", "mathtext.it": "sans:italic", "mathtext.bf": "sans:bold",
+    "mathtext.cal": "sans", "mathtext.tt": "monospace", "mathtext.sf": "sans",
+    "axes.linewidth": 0.6, "grid.linewidth": 0.4,
+    "xtick.major.width": 0.6, "ytick.major.width": 0.6,
+})
+
+def _pdf_width_in(path):
+    """Width of the saved PDF, in inches. A tight bounding box crops the canvas,
+    so this reports what actually landed rather than what figsize asked for."""
+    import re
+    with open(path, "rb") as fh:
+        m = re.search(rb"/MediaBox\s*\[([^\]]*)\]", fh.read())
+    return float(m.group(1).split()[2]) / 72 if m else float("nan")
+
+
 EXTENT = [-25, 32, 34, 72]          # lon0, lon1, lat0, lat1 (Europe)
 SP_ACTIVE = 0.30                    # snowpack "active" if SP anomaly lives >=30% of winters
 STORES = ["UZ", "Qsim", "SM", "SP", "LZ"]   # SP and LZ adjacent: the two long-memory reservoirs
@@ -81,8 +111,8 @@ def _store_map(fig, gs, d, store, title, vmin, vmax, cblabel, log=True):
                           else Normalize(vmin=vmin, vmax=vmax)),
                     s=13, alpha=0.9, edgecolors="none", zorder=2, **tf)
     cb = plt.colorbar(sc, ax=ax, shrink=0.62, pad=0.02, extend="both")
-    cb.set_label(cblabel, fontsize=9)
-    ax.set_title(f"{title}\n({len(d):,} catchments)", fontsize=10)
+    cb.set_label(cblabel)
+    ax.set_title(f"{title}\n({len(d):,} catchments)")
     return sc
 
 
@@ -91,8 +121,10 @@ def make(strength_memory: pd.DataFrame, out: str):
     snow = d[(d.sp_active_frac >= SP_ACTIVE) & d.tau_SP.notna()].copy()
     gw = d[d.tau_LZ.notna()].copy()
 
-    fig = plt.figure(figsize=(10.0, 7.4))
-    gs = fig.add_gridspec(2, 2, height_ratios=[0.80, 1.4], hspace=0.02, wspace=0.10)
+    fig = plt.figure(figsize=(FIG_W, 4.62))
+    # hspace was 0.02 on the old 10 in canvas; at 6.5 in the 9 pt two-line store
+    # labels under (a) need real clearance from the two-line map titles below
+    gs = fig.add_gridspec(2, 2, height_ratios=[0.80, 1.4], hspace=0.16, wspace=0.10)
 
     # (a) distribution of tau per store, log axis --------------------------------
     axd = fig.add_subplot(gs[0, :])
@@ -101,20 +133,20 @@ def make(strength_memory: pd.DataFrame, out: str):
         v = (snow.tau_SP if s == "SP" else d[f"tau_{s}"]).dropna()
         data.append(v.to_numpy())
         colors.append(STORE_COLOR[s])
-    bp = axd.boxplot(data, vert=True, widths=0.6, showfliers=False, patch_artist=True,
+    bp = axd.boxplot(data, widths=0.6, showfliers=False, patch_artist=True,
                      medianprops=dict(color="k", lw=1.4), whis=(5, 95))
     for patch, c in zip(bp["boxes"], colors):
         patch.set_facecolor(c); patch.set_alpha(0.75); patch.set_edgecolor("#444")
     for i, v in enumerate(data, 1):
         axd.text(i, np.median(v), f"{np.median(v):.0f}d", ha="center", va="center",
-                 fontsize=8.5, fontweight="bold", zorder=6,
+                 fontweight="bold", zorder=6,
                  bbox=dict(boxstyle="round,pad=0.18", fc="white", ec="0.55", lw=0.5, alpha=0.92))
     axd.set_yscale("log")
     axd.set_xticks(range(1, len(STORES) + 1))
-    axd.set_xticklabels([STORE_LABEL[s] for s in STORES], fontsize=8.5)
-    axd.set_ylabel(r"memory $\tau$ (days, log)", fontsize=9.5)
+    axd.set_xticklabels([STORE_LABEL[s] for s in STORES])
+    axd.set_ylabel(r"memory $\tau$ (days, log)")
     axd.set_title("(a) Store memory timescales (box = IQR, whiskers 5–95th pct)",
-                  fontsize=9.5, loc="left")
+                  loc="left")
     axd.grid(axis="y", ls=":", alpha=0.4)
 
     # (b) snowpack memory map, (c) groundwater memory map ------------------------
@@ -128,11 +160,17 @@ def make(strength_memory: pd.DataFrame, out: str):
     _store_map(fig, gs[1, 1], gw, "LZ", "(c) Groundwater memory $\\tau_{LZ}$",
                vmin=10, vmax=1100, cblabel=r"$\tau_{LZ}$ (days)")
 
-    fig.savefig(out, dpi=300, bbox_inches="tight")
     import os
-    fig.savefig(os.path.splitext(out)[0] + ".pdf", bbox_inches="tight")
+    # Explicit margins and no tight bbox: bbox_inches="tight" measures a cartopy
+    # GeoAxes as empty and crops the maps away, leaving only their colourbars.
+    # Fixing the margins here also means the saved width is exactly FIG_W.
+    fig.subplots_adjust(left=0.088, right=0.972, top=0.955, bottom=0.02)
+    fig.savefig(out, dpi=300)
+    pdf = os.path.splitext(out)[0] + ".pdf"
+    fig.savefig(pdf)
     plt.close(fig)
-    print(f"  wrote {out} (+.pdf)  snow-active={len(snow)}  gw={len(gw)}", flush=True)
+    print(f"  wrote {out} (+.pdf)  snow-active={len(snow)}  gw={len(gw)}"
+          f"  [{_pdf_width_in(pdf):.2f} in wide]", flush=True)
 
 
 def main():
