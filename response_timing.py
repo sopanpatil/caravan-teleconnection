@@ -206,7 +206,7 @@ def validate(res: pd.DataFrame):
         # See the module docstring for why the two-sided alternative fails here.
         # NOTE the subsetting criterion. This uses the MODEL's snow-active fraction,
         # which is what this script has to hand; the manuscript (Text S2) subsets on the
-        # HydroATLAS snow-fraction attribute instead (<= 0.05). The two give the
+        # Caravan snow-fraction attribute instead (<= 0.05). The two give the
         # same sign and monotonicity but different n and a different rho, so do not
         # cross-quote the number printed here as the manuscript's.
         sub = ok[["retention", "tau_Qsim", "sp_active_frac"]].dropna()

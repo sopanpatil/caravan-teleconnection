@@ -28,9 +28,12 @@ rather than an undocumented working file.
 
 One choice worth stating. The base Caravan and CAMELS-DK collections publish
 aridity, moisture_index and seasonality twice, once computed from ERA5-Land and
-once from FAO Penman-Monteith PET. We take the ERA5-Land variant, so that these
-signatures rest on the same forcing as the model runs. The GRDC-Caravan
-extension publishes the columns unsuffixed and they are read as they are.
+once from FAO Penman-Monteith PET. We take the ERA5-Land variant because it is
+the only one every source can supply: the GRDC-Caravan extension ships no
+Penman-Monteith PET and publishes these columns unsuffixed, so they can only rest
+on ERA5-Land PET, and are read as they are. Taking the ERA5-Land variant elsewhere
+keeps the predictor on one basis across the sample. Note that this is not the PET
+the model runs use: those use FAO-56 Penman-Monteith PET (see caravan_io.py).
 
 The output covers the whole downloaded domain (7,195 catchments), not the
 2,135-catchment analysis set: screening happens downstream, in
@@ -57,8 +60,8 @@ HYDROATLAS = {
     "snw_pc_syr": "snowcov_pc",
 }
 # Caravan signatures published in an ERA5-Land and an FAO Penman-Monteith
-# flavour; we want ERA5-Land, and fall back to the unsuffixed name that the
-# GRDC-Caravan extension uses.
+# flavour; we want ERA5-Land, the only basis GRDC-Caravan can supply, and fall
+# back to the unsuffixed name that extension uses.
 DUAL = ["aridity", "moisture_index", "seasonality"]
 PLAIN = ["frac_snow", "p_mean"]
 

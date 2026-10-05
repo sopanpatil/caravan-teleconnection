@@ -35,7 +35,7 @@ are defined the same way.
 Snow split. The PRIMARY split here is the model's snow-active fraction (sp_active_frac
 >= 0.3), because this script exists to defend the 0.89-vs-0.17 contrast in Results
 section 4.2.1 and must therefore use that section's own split, or it would be answering a
-different question. A secondary split on the HydroATLAS attribute (frac_snow <= 0.05,
+different question. A secondary split on the Caravan attribute (frac_snow <= 0.05,
 the criterion Text S2 uses for a different purpose -- isolating unimodal lag profiles) is
 reported alongside, to show the conclusion does not depend on which is chosen.
 
@@ -54,7 +54,7 @@ MIN_WINTERS_GAIN = 20        # as physiographic_synthesis.py
 SP_ACTIVE = 0.3              # snowpack anomaly present in >=30%% of winters => snow-active.
                              # PRIMARY split: the same one Results sec. 4.2.1 uses for the
                              # 0.89-vs-0.17 contrast this script exists to defend.
-SNOW_FREE = 0.05             # HydroATLAS frac_snow: secondary split, reported as a check
+SNOW_FREE = 0.05             # Caravan frac_snow: secondary split, reported as a check
                              # that the conclusion is not an artefact of the primary one
 BETA = {"NAO_DJF": "beta_NAO", "EA_DJF": "beta_EA",
         "EAWR_DJF": "beta_EAWR", "SCA_DJF": "beta_SCA"}
@@ -180,7 +180,7 @@ def validate(res: pd.DataFrame, strength_memory: pd.DataFrame, attrs: pd.DataFra
             out[key + "_t"] = float(s[f"gain_{tag}_tctrl"].median())
             print(f"     {lab} (sp_active_frac{'<' if 'free' in lab else '>='}{SP_ACTIVE}): "
                   f"{out[key]:.3f} -> {out[key + '_t']:.3f}   (n={len(s)})")
-    print(f"\nsecondary split (HydroATLAS frac_snow <= {SNOW_FREE}), as a check:")
+    print(f"\nsecondary split (Caravan frac_snow <= {SNOW_FREE}), as a check:")
     for tag in ["obs", "sim"]:
         for lab, sub in [("snow-free  ", d[d.frac_snow <= SNOW_FREE]),
                          ("snow-active", d[d.frac_snow > SNOW_FREE])]:

@@ -13,8 +13,8 @@ response properties, and memory is the only property whose physiographic control
 survive the wild cluster bootstrap, so the paper leans on it. This script exists so that
 the claim cannot drift silently if the upstream scripts are re-run.
 
-Subsetting criterion, which is easy to get wrong: "snow-free" here is the HydroATLAS
-attribute frac_snow <= 0.05, restricted to catchments with a detectable signal in BOTH
+Subsetting criterion, which is easy to get wrong: "snow-free" here is the Caravan
+attribute frac_snow (ERA5-Land-derived) <= 0.05, restricted to catchments with a detectable signal in BOTH
 the observed and simulated lag profiles (sig > 0.2 in each). The validate() print inside
 response_timing.py / response_properties_observed.py instead uses the MODEL's
 sp_active_frac, which is what those scripts have to hand: same sign and monotonicity,
@@ -32,7 +32,7 @@ import pandas as pd
 from scipy import stats
 
 SIG_MIN = 0.2        # peak |r| needed before a lag profile is usable, as in response_timing.py
-SNOW_FREE = 0.05     # HydroATLAS frac_snow at or below this counts as snow-free
+SNOW_FREE = 0.05     # Caravan frac_snow at or below this counts as snow-free
 
 # (label, value quoted in Text S2, tolerance)
 EXPECTED = {

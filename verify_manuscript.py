@@ -602,7 +602,7 @@ def group_b() -> list[tuple[str, str, object, object]]:
          10, "physiographic_synthesis.py", "MIN_COUNTRY_N"),
         ("4.2.1", "snow-active means a snowpack anomaly in at least 30 % of winters",
          0.3, "temperature_control.py", "SP_ACTIVE"),
-        ("SI Text S2", "snow-free means HydroATLAS snow fraction at most 0.05",
+        ("SI Text S2", "snow-free means snow fraction at most 0.05",
          0.05, "verify_text_s2.py", "SNOW_FREE"),
     ]
     return [(sec, text, stated, _const(f, n)) for sec, text, stated, f, n in spec]

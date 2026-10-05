@@ -85,8 +85,10 @@ Written by `build_attributes.py`, which copies named columns out of the
 attribute CSVs the Caravan collections ship. Nothing is recomputed.
 
 `aridity`, `moisture_index` and `seasonality` are the **ERA5-Land** variants
-where a collection publishes both those and FAO Penman-Monteith ones, so that
-they rest on the same forcing as the model runs.
+where a collection publishes both those and FAO Penman-Monteith ones. ERA5-Land is
+the only basis every source can supply: GRDC-Caravan ships no Penman-Monteith PET
+and publishes these columns unsuffixed. The model runs themselves use FAO-56
+Penman-Monteith PET, so these signatures do not share the models' PET.
 
 | column | type | source column | definition |
 |---|---|---|---|
