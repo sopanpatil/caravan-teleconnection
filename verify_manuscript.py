@@ -468,6 +468,20 @@ def _(d): return d["sum"].set_index("response").loc["log_tau_obs", "loco_rho_wit
 @claim("4.5", "five of 14 order no better than at random", 5, 0)
 def _(d): return int(d["sum"].set_index("response").loc["log_tau_obs", "loco_n_big_negative_rho"])
 
+@claim("4.5", "predicted national means track the observed ones, Pearson r = +0.73 across 14 countries", 0.73, 0.006)
+def _(d):
+    # Each country's observed mean log tau, and the mean the relationship predicts
+    # for it when that country is withheld: observed mean + mean_bias (predicted
+    # minus observed). Restricted, like every 4.5 summary, to countries with n >= 10.
+    gb = {"England": "Great Britain", "Scotland": "Great Britain", "Wales": "Great Britain"}
+    country = d["cal"].set_index("gauge_id")["country"].replace(gb)
+    o = d["obs"][d["obs"].tau_Qobs > 0]
+    obs = np.log(o.tau_Qobs).groupby(o.gauge_id.map(country)).agg(["mean", "size"])
+    b = d["by"].set_index("country").join(obs, how="inner")
+    b = b[b.n >= 10]
+    assert (b["size"] == b.n).all(), "national samples differ from the LOCO folds"
+    return pearsonr(b["mean"] + b.mean_bias, b["mean"])[0]
+
 @claim("4.5", "pooled de-biased -0.11 for observed response strength", -0.11, 0.006)
 def _(d): return d["sum"].set_index("response").loc["gain_Qobs", "loco_r2_local_debiased_pooled"]
 
