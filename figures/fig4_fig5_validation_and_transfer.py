@@ -76,7 +76,7 @@ matplotlib.rcParams.update({
 })
 
 PRED_LABEL = {"slope_l": "slope (log)", "frac_snow": "snow fraction",
-              "gwt_l": "GW-table depth (log)", "aridity": "aridity",
+              "gwt_l": "water-table depth (log)", "aridity": "aridity",
               "karst_pc": "karst %", "clay_pc": "clay %"}
 PROPS = [("gain_Qobs", "response strength", "#0072b2", "o"),
          ("log_tau_obs", "memory", "#009e73", "s"),

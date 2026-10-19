@@ -21,6 +21,6 @@ numba            # JIT kernels inside hbv-model's hbv.py (external dependency)
 # cartopy
 
 # Not on PyPI. The calibrated HBV itself comes from the separate hbv-model
-# repository (https://github.com/sopanpatil/hbv-model, MIT,
-# doi:10.5281/zenodo.21860981). Put it on PYTHONPATH, or set HBV_MODEL_REPO
-# to its checkout; see the README.
+# repository (https://github.com/sopanpatil/hbv-model, MIT), at release
+# v1.1.0 (doi:10.5281/zenodo.21860981). Put that checkout on PYTHONPATH, or
+# set HBV_MODEL_REPO to it; see the README.

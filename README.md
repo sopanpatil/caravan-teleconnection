@@ -18,10 +18,11 @@ resulting physiographic relationships transfer by withholding whole countries.
 Python 3.12 (the published results used 3.12.11; every pinned version is
 recorded at the top of `requirements.txt`). Install the dependencies with
 `pip install -r requirements.txt`, then the HBV model itself, which lives in a
-separate repository and is not on PyPI:
+separate repository and is not on PyPI. Check out `v1.1.0`, the release the
+archived outputs in `derived_data/` were produced with:
 
 ```
-git clone https://github.com/sopanpatil/hbv-model
+git clone --branch v1.1.0 https://github.com/sopanpatil/hbv-model
 export HBV_MODEL_REPO=/path/to/hbv-model        # or put it on PYTHONPATH
 ```
 
