@@ -222,7 +222,7 @@ states against the constant in this code that implements it. It exits non-zero
 on any mismatch:
 
 ```
-python verify_manuscript.py                  # 109 claims + 17 parameters
+python verify_manuscript.py                  # 118 claims + 17 parameters
 python verify_manuscript.py --list-unchecked # what it does not cover, and why
 ```
 
