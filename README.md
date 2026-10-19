@@ -234,8 +234,9 @@ python temperature_control.py   # SI Text S1
 python verify_text_s2.py        # SI Text S2
 ```
 
-Supporting Information Tables S1 to S3 are rendered directly from
-`derived_data/physiographic_*.csv`, so they are checked by construction.
+Supporting Information Tables S1 to S3 transcribe
+`derived_data/physiographic_*.csv`; no script writes them, so they are not
+checked by construction.
 
 ## Licence and citation
 

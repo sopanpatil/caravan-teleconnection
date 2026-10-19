@@ -24,8 +24,9 @@ Scope. Three groups, and the boundaries are deliberate:
      --list-unchecked with the reason for each, so the gap is explicit rather
      than silent. Two other scripts cover the Supporting Information:
      temperature_control.py (Text S1) and verify_text_s2.py
-     (Text S2). Supporting Information Tables S1 to S3 are rendered directly
-     from physiographic_*.csv, so they are checked by construction.
+     (Text S2). Supporting Information Tables S1 to S3 transcribe
+     physiographic_*.csv; no script writes them, so they are not checked by
+     construction.
 """
 from __future__ import annotations
 import argparse
@@ -642,10 +643,11 @@ UNCHECKED = [
     ("4.1", "latitude-band means -0.52, +0.41 and their significance shares",
      "reproduced by figures/fig1_nao_precipitation_sensitivity.py, which prints them"),
     ("4.4", "per-predictor coefficients, p and q",
-     "Supporting Information Table S2 is rendered from physiographic_coeffs_*.csv"),
+     "Supporting Information Table S2 transcribes physiographic_coeffs_*.csv; "
+     "compare against that file"),
     ("4.5", "per-country skill",
-     "Supporting Information Table S3 is rendered from "
-     "physiographic_by_country_full.csv"),
+     "Supporting Information Table S3 transcribes "
+     "physiographic_by_country_full.csv; compare against that file"),
     ("SI Text S1", "temperature-control values",
      "checked by temperature_control.py"),
     ("SI Text S2", "retention values",
