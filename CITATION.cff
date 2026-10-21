@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite both the software and the paper below."
+message: "If you use this software, please cite it as below."
 title: "caravan-teleconnection: Analysis pipeline for catchment storage controls on the European winter teleconnection response"
 type: software
 authors:
