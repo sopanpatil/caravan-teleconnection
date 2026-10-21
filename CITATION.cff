@@ -9,17 +9,20 @@ authors:
     affiliation: "Bangor University"
   - family-names: Dallison
     given-names: Richard J. H.
+    orcid: "https://orcid.org/0000-0001-5673-1919"
     affiliation: "Bangor University"
   - family-names: Jahanshahi
     given-names: Afshin
+    orcid: "https://orcid.org/0000-0003-0221-0055"
     affiliation: "University of Galway"
   - family-names: Chevuturi
     given-names: Amulya
+    orcid: "https://orcid.org/0000-0003-2815-7221"
     affiliation: "UK Centre for Ecology & Hydrology"
 version: "1.0.0"
 license: MIT
 repository-code: "https://github.com/sopanpatil/caravan-teleconnection"
-date-released: "2026-09-04"
+date-released: "2026-10-21"
 keywords:
   - hydrology
   - large-sample hydrology
@@ -56,23 +59,26 @@ references:
     volume: 10
     year: 2023
     doi: "10.1038/s41597-023-01975-w"
-preferred-citation:
-  type: article
-  title: "Catchment storage controls on the response of European winter streamflow to North Atlantic teleconnections"
-  authors:
-    - family-names: Patil
-      given-names: Sopan D.
-      orcid: "https://orcid.org/0000-0002-8575-5220"
-      affiliation: "Bangor University"
-    - family-names: Dallison
-      given-names: Richard J. H.
-      affiliation: "Bangor University"
-    - family-names: Jahanshahi
-      given-names: Afshin
-      affiliation: "University of Galway"
-    - family-names: Chevuturi
-      given-names: Amulya
-      affiliation: "UK Centre for Ecology & Hydrology"
-  year: 2026
-  # journal: "..."               # add once the venue is settled
-  # doi: "10.xxxx/xxxxxxxxxx"    # add once the article DOI is assigned
+# preferred-citation:
+#   type: article
+#   title: "Catchment storage controls on the response of European winter streamflow to North Atlantic teleconnections"
+#   authors:
+#     - family-names: Patil
+#       given-names: Sopan D.
+#       orcid: "https://orcid.org/0000-0002-8575-5220"
+#       affiliation: "Bangor University"
+#     - family-names: Dallison
+#       given-names: Richard J. H.
+#       orcid: "https://orcid.org/0000-0001-5673-1919"
+#       affiliation: "Bangor University"
+#     - family-names: Jahanshahi
+#       given-names: Afshin
+#       orcid: "https://orcid.org/0000-0003-0221-0055"
+#       affiliation: "University of Galway"
+#     - family-names: Chevuturi
+#       given-names: Amulya
+#       orcid: "https://orcid.org/0000-0003-2815-7221"
+#       affiliation: "UK Centre for Ecology & Hydrology"
+#   year: 2026
+#   # journal: "..."               # add once the venue is settled
+#   # doi: "10.xxxx/xxxxxxxxxx"    # add once the article DOI is assigned
