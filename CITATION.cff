@@ -22,7 +22,7 @@ authors:
 version: "1.0.0"
 license: MIT
 repository-code: "https://github.com/sopanpatil/caravan-teleconnection"
-date-released: "2026-10-21"
+date-released: "2026-10-22"
 keywords:
   - hydrology
   - large-sample hydrology
