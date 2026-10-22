@@ -31,9 +31,9 @@ keywords:
   - catchment storage
   - streamflow memory
   - regionalisation
-# Concept DOI goes here once the first Zenodo release is minted; it resolves
-# to the newest version, so it stays correct across releases.
-# doi: "10.5281/zenodo.XXXXXXXX"
+# Concept DOI: it resolves to the newest version, so it stays correct across
+# releases. v1.0.0 itself is 10.5281/zenodo.23576765.
+doi: "10.5281/zenodo.23576764"
 references:
   - type: software
     title: "hbv-model: A standalone HBV rainfall-runoff model and SCE-UA calibration implementation"
